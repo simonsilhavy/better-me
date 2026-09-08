@@ -71,7 +71,7 @@ export function timingSafeEqual(a: string, b: string): boolean {
  * sets it keeps working exactly as before.
  */
 export function gateConfig() {
-  const password = process.env.APP_PASSWORD;
+  const pin = process.env.APP_PIN;
   const secret = process.env.SESSION_SECRET;
-  return password && secret ? { password, secret } : null;
+  return pin && secret ? { pin, secret } : null;
 }

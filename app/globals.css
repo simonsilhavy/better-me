@@ -130,3 +130,35 @@ body {
   background: var(--accent);
   color: #0e0f13;
 }
+
+/* ---------- PIN pad ---------- */
+
+.bm-key {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 80ms ease, transform 80ms ease;
+}
+
+.bm-key:active:not(:disabled) {
+  background: var(--accent);
+  color: #0e0f13;
+  transform: scale(0.94);
+}
+
+@media (hover: hover) {
+  .bm-key:hover:not(:disabled) {
+    background: var(--panel-2);
+  }
+}
+
+@keyframes bm-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(5px); }
+}

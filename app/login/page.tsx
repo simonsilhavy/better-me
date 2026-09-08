@@ -1,4 +1,4 @@
-import { LoginForm } from './LoginForm';
+import { PinPad } from './PinPad';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,5 +8,5 @@ export default async function LoginPage({
   searchParams: Promise<{ next?: string }>;
 }) {
   const { next } = await searchParams;
-  return <LoginForm next={next ?? '/'} />;
+  return <PinPad next={next ?? '/'} />;
 }

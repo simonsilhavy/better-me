@@ -24,5 +24,16 @@ export const entries = pgTable('entries', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
+/**
+ * Failed PIN attempts, per client IP. A 6-digit PIN is only a million
+ * combinations, so the lockout below is what actually makes it safe to use.
+ */
+export const loginAttempts = pgTable('login_attempts', {
+  ip: text('ip').primaryKey(),
+  fails: integer('fails').notNull().default(0),
+  lockedUntil: timestamp('locked_until', { withTimezone: true }),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 export type EntryRow = typeof entries.$inferSelect;
 export type EntryInsert = typeof entries.$inferInsert;

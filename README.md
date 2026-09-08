@@ -22,10 +22,15 @@ Replaces the single-file `better-me.html` artifact whose data lived hardcoded in
 
 ## Access control
 
-The whole app sits behind a password once **both** `APP_PASSWORD` and
+The whole app sits behind a 6-digit PIN once **both** `APP_PIN` and
 `SESSION_SECRET` are set — middleware redirects anything unauthenticated to
 `/login` and answers `/api/*` with `401`. With either variable missing the gate
 stays off and the app is open to anyone with the URL.
+
+`/login` is a phone-style keypad that submits on the sixth digit. Six digits is
+only a million combinations, so `login_attempts` tracks failures per IP: five
+free tries, then a lockout that doubles from 30 s up to an hour, clearing after
+30 quiet minutes. A correct PIN is refused while a lockout is active.
 
 Login sets an HTTP-only cookie holding `<expiry>.<hmac>`, signed with
 `SESSION_SECRET` and good for a year. The password never reaches the browser,
@@ -108,13 +113,13 @@ Upserts by date, so re-running is safe. The file currently ships as `[]`.
 1. Import the repo in Vercel.
 2. Vercel dashboard → **Storage → Neon** — the integration injects `DATABASE_URL`.
 3. Add `API_TOKEN` (`openssl rand -hex 32`) if you want API writes.
-4. To make the app private, add `APP_PASSWORD` (what you type) and
-   `SESSION_SECRET` (`openssl rand -hex 32`), then redeploy.
+4. To make the app private, add `APP_PIN` (six digits) and `SESSION_SECRET`
+   (`openssl rand -hex 32`), then redeploy.
 5. `npm run db:push` once against the production `DATABASE_URL` to create the table.
 
 ## Notes
 
-- Single-user app, so there are no accounts — one shared password, or none.
+- Single-user app, so there are no accounts — one PIN, or none.
 - The dark theme lives as CSS variables at the top of `app/globals.css`
   (`--win` green / `--loss` red). `better-me.html` wasn't available during the
   port, so the palette is a close reconstruction rather than a byte-exact copy —
