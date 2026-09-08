@@ -104,8 +104,11 @@ PUT /api/entries/2026-09-02                # upsert — Authorization: Bearer $A
 }
 ```
 
-Out-of-range numbers are clamped and snapped to their step, and unknown enum
-values fall back to the default — a malformed payload can't corrupt a row.
+Fields are habit keys. Out-of-range numbers are clamped and snapped to the
+habit's step, and unknown choices fall back to its default, so a malformed
+payload can't corrupt a row. Keys matching no habit come back in `ignoredKeys`
+rather than being dropped in silence. Responses always carry every active
+habit, recorded or not, so a day can be read, edited and written back whole.
 If `API_TOKEN` is unset, `PUT` returns `503` and writes are disabled entirely.
 
 Example:
@@ -119,27 +122,61 @@ curl -X PUT https://<app>.vercel.app/api/entries/2026-09-02 \
 
 ## Data model
 
-One row per day, `date` (`YYYY-MM-DD`) as the primary key — see `db/schema.ts`.
+Four tables, in `db/schema.ts`:
+
+| Table | Holds |
+| --- | --- |
+| `habit_groups` | your named groups — Zdraví, Principy, Uzávěrka dne |
+| `habits` | what is tracked: key, label, kind, config, group, role |
+| `entries` | one row per day that was touched |
+| `entry_values` | one recorded value per day per habit |
+
+Values reference the **habit**, never the group, so moving a habit between
+groups changes one field in `habits` and touches no recorded data at all.
+
+A habit's `kind` picks its control and its storage column: `scale`, `counter`
+and `duration` go to `num`; `choice` and `text` to `txt`; `boolean` to `flag`.
+
+Only values that differ from a habit's default are stored, which is what makes
+"how much of today did I fill in" answerable — a habit with no row is one you
+skipped.
+
+`entry_values.habit_id` is `ON DELETE RESTRICT`: the database refuses to drop a
+habit that has history, so data can only be lost through an explicit, confirmed
+delete — never as a side effect.
+
+`habits.role` marks the habit the statistics lean on (`verdict` drives win/loss
+streaks, `note` shows in history lists). Both are ordinary, removable habits;
+when the verdict habit is gone the history screen drops those tiles rather than
+rendering zeros.
+
+## Migrations
+
+Schema changes are versioned files under `drizzle/`, applied with
+`npm run db:migrate`. Generate a new one with `npm run db:generate` after
+editing `db/schema.ts`, and read the SQL before applying it.
 
 ## Local setup
 
 ```bash
 npm install
 cp .env.example .env.local     # fill in DATABASE_URL (+ API_TOKEN if you want writes)
-npm run db:push                # create the table
+npm run db:migrate             # create the tables
+npm run db:seed:habits         # groups and habits
 npm run dev
 ```
 
-## Seeding history
-
-The 45-day backlog (2026-07-02 → 2026-09-02) goes into `seed-data.json` as a
-plain array of entry objects, then:
+## Seeding
 
 ```bash
-npm run db:seed
+npm run db:seed:habits   # 5 groups and 12 habits — safe to re-run
+npm run db:seed          # day records from seed-data.json
 ```
 
-Upserts by date, so re-running is safe. The file currently ships as `[]`.
+`seed-data.json` is an array of day objects whose fields are habit keys, i.e.
+exactly what `PUT /api/entries/:date` accepts. It ships as `[]`. Both upsert, so
+re-running is safe; the habit seed never overwrites a habit you have since
+edited.
 
 ## Deploy
 
@@ -148,7 +185,7 @@ Upserts by date, so re-running is safe. The file currently ships as `[]`.
 3. Add `API_TOKEN` (`openssl rand -hex 32`) if you want API writes.
 4. To make the app private, add `APP_PIN` (six digits) and `SESSION_SECRET`
    (`openssl rand -hex 32`), then redeploy.
-5. `npm run db:push` once against the production `DATABASE_URL` to create the table.
+5. `npm run db:migrate` and `npm run db:seed:habits` once against the production `DATABASE_URL`.
 
 ## Notes
 

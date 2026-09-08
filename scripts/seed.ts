@@ -1,60 +1,58 @@
 /**
- * Seeds the DB from seed-data.json.
+ * Seeds day records from seed-data.json.
  *
- * The historical dataset (2026-07-02 → 2026-09-02) lives in seed-data.json as a
- * plain array of entry objects. Drop the export in there and run:
+ * The file is an array of day objects whose fields are habit keys, i.e. exactly
+ * the shape `PUT /api/entries/:date` accepts:
  *
- *   npm run db:seed
+ *   [{ "date": "2026-07-02", "kliky": 60, "verdict": "win", "note": "…" }]
  *
- * Re-running is safe: every row is upserted by date.
+ * Run `npm run db:seed:habits` first — values need habits to attach to.
+ * Re-running is safe: every day is upserted by date.
  */
-import 'dotenv/config';
+import { config } from 'dotenv';
+config({ path: '.env.local' });
+config();
+
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { neon } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-http';
-import { entries } from '../db/schema';
-import { parseEntry } from '../lib/domain';
+import { upsertDay } from '../lib/entries';
 import { isValidDate } from '../lib/date';
-
-const url = process.env.DATABASE_URL ?? process.env.POSTGRES_URL;
-if (!url) throw new Error('DATABASE_URL is not set');
-
-const db = drizzle(neon(url));
 
 async function main() {
   const file = resolve(process.cwd(), 'seed-data.json');
   const raw = JSON.parse(readFileSync(file, 'utf8')) as unknown;
 
   if (!Array.isArray(raw)) {
-    throw new Error('seed-data.json must contain an array of entries');
+    throw new Error('seed-data.json must contain an array of days');
   }
-
   if (raw.length === 0) {
-    console.log('seed-data.json is empty — nothing to seed.');
+    console.log('seed-data.json je prázdný — není co importovat.');
     return;
   }
 
   let written = 0;
+  const unknownKeys = new Set<string>();
+
   for (const item of raw) {
-    const date = (item as { date?: string })?.date;
-    if (!date || !isValidDate(date)) {
-      console.warn(`Skipping entry with invalid date: ${JSON.stringify(date)}`);
+    const { date, updatedAt, ...values } = (item ?? {}) as Record<string, unknown>;
+    void updatedAt;
+
+    if (typeof date !== 'string' || !isValidDate(date)) {
+      console.warn(`Přeskakuji záznam s neplatným datem: ${JSON.stringify(date)}`);
       continue;
     }
 
-    const parsed = parseEntry(date, item);
-    const values = { ...parsed, updatedAt: new Date() };
-
-    await db
-      .insert(entries)
-      .values(values)
-      .onConflictDoUpdate({ target: entries.date, set: values });
-
+    const { ignored } = await upsertDay(date, values);
+    ignored.forEach((k) => unknownKeys.add(k));
     written++;
   }
 
-  console.log(`Seeded ${written} entr${written === 1 ? 'y' : 'ies'}.`);
+  console.log(`Importováno dní: ${written}.`);
+  if (unknownKeys.size > 0) {
+    console.warn(
+      `Neznámé klíče (žádný habit je nemá): ${[...unknownKeys].join(', ')}`,
+    );
+  }
 }
 
 main().catch((error) => {

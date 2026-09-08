@@ -1,28 +1,90 @@
 import {
   pgTable,
+  serial,
   date,
   integer,
   text,
   boolean,
+  doublePrecision,
+  jsonb,
   timestamp,
+  primaryKey,
+  index,
 } from 'drizzle-orm/pg-core';
 
-export const entries = pgTable('entries', {
-  date: date('date').primaryKey(), // 'YYYY-MM-DD'
-  energyMorning: integer('energy_morning').notNull().default(0), // 0-100 step 10
-  energyUsed: integer('energy_used').notNull().default(0), // 0-100 step 10
-  kliky: integer('kliky').notNull().default(0), // 0-250 step 5
-  drepy: integer('drepy').notNull().default(0), // 0-250 step 5
-  shake: integer('shake').notNull().default(0), // 0 | 1 | 2
-  sprcha: text('sprcha').notNull().default('none'), // 'none' | 'partial' | 'full'
-  protahovani: text('protahovani'), // null | 'horni' | 'dolni' | 'cele'
-  dpMinutes: integer('dp_minutes').notNull().default(0), // Daňová Pohoda minutes
-  instagram: boolean('instagram').notNull().default(false),
-  resolveNow: boolean('resolve_now').notNull().default(false),
-  verdict: text('verdict'), // null | 'win' | 'loss'
-  note: text('note').notNull().default(''),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+/**
+ * Named groups of habits — "oddíly" — that structure the entry screen.
+ * Archiving is a flag, never a delete, so history survives reorganisation.
+ */
+export const habitGroups = pgTable('habit_groups', {
+  id: serial('id').primaryKey(),
+  key: text('key').notNull().unique(),
+  label: text('label').notNull(),
+  position: integer('position').notNull().default(0),
+  archivedAt: timestamp('archived_at', { withTimezone: true }),
 });
+
+/**
+ * What is tracked. Moving a habit between groups changes `groupId` and nothing
+ * else — values reference the habit, never the group, so a reorganisation can't
+ * touch recorded data.
+ *
+ * `key` is the stable identifier the API speaks; `label` is free to change.
+ * `role` marks the habit the statistics lean on (win/loss streaks), so that
+ * habit can be renamed, or replaced, without the history screen losing meaning.
+ */
+export const habits = pgTable(
+  'habits',
+  {
+    id: serial('id').primaryKey(),
+    groupId: integer('group_id').references(() => habitGroups.id, {
+      onDelete: 'set null',
+    }),
+    key: text('key').notNull().unique(),
+    label: text('label').notNull(),
+    // scale | counter | duration | choice | boolean | text
+    kind: text('kind').notNull(),
+    config: jsonb('config').notNull().default({}),
+    // null | 'verdict' | 'note'
+    role: text('role'),
+    position: integer('position').notNull().default(0),
+    archivedAt: timestamp('archived_at', { withTimezone: true }),
+  },
+  (t) => [index('habits_group_idx').on(t.groupId)],
+);
+
+/** One row per day that was touched. Values hang off it. */
+export const entries = pgTable('entries', {
+  date: date('date').primaryKey(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
+ * One recorded value, per day per habit. Exactly one of num/txt/flag is used,
+ * chosen by the habit's kind.
+ *
+ * `onDelete: 'restrict'` on habitId is deliberate: the database refuses to drop
+ * a habit that has history, so data can only be lost through the explicit,
+ * confirmed delete path — never as a side effect.
+ */
+export const entryValues = pgTable(
+  'entry_values',
+  {
+    date: date('date')
+      .notNull()
+      .references(() => entries.date, { onDelete: 'cascade' }),
+    habitId: integer('habit_id')
+      .notNull()
+      .references(() => habits.id, { onDelete: 'restrict' }),
+    num: doublePrecision('num'),
+    txt: text('txt'),
+    flag: boolean('flag'),
+  },
+  (t) => [
+    primaryKey({ columns: [t.date, t.habitId] }),
+    index('entry_values_habit_idx').on(t.habitId),
+  ],
+);
 
 /**
  * Live sessions. A self-contained signed cookie can't be revoked, and browsers
@@ -37,11 +99,10 @@ export const sessions = pgTable('sessions', {
 });
 
 /**
- * Failed PIN attempts, per client IP. A 6-digit PIN is only a million
- * combinations, so the lockout below is what actually makes it safe to use.
+ * Failed PIN attempts, per client IP, plus one global row. A 6-digit PIN is
+ * only a million combinations, so the lockout is what makes it safe to use.
  */
 export const loginAttempts = pgTable('login_attempts', {
-  // A client IP, or GLOBAL_KEY for the account-wide backstop.
   key: text('ip').primaryKey(),
   fails: integer('fails').notNull().default(0),
   lockedUntil: timestamp('locked_until', { withTimezone: true }),
@@ -49,5 +110,6 @@ export const loginAttempts = pgTable('login_attempts', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
-export type EntryRow = typeof entries.$inferSelect;
-export type EntryInsert = typeof entries.$inferInsert;
+export type HabitGroupRow = typeof habitGroups.$inferSelect;
+export type HabitRow = typeof habits.$inferSelect;
+export type EntryValueRow = typeof entryValues.$inferSelect;

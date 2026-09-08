@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { EntryForm } from '@/components/EntryForm';
-import { getEntryOrEmpty } from '@/lib/entries';
+import { getDay, getGroups, getHabits } from '@/lib/entries';
 import { isValidDate } from '@/lib/date';
 
 export const dynamic = 'force-dynamic';
@@ -13,6 +13,10 @@ export default async function DayPage({
   const { date } = await params;
   if (!isValidDate(date)) notFound();
 
-  const entry = await getEntryOrEmpty(date);
-  return <EntryForm key={date} initial={entry} />;
+  const [entry, groups, habits] = await Promise.all([
+    getDay(date),
+    getGroups(),
+    getHabits(),
+  ]);
+  return <EntryForm key={date} entry={entry} groups={groups} habits={habits} />;
 }

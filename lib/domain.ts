@@ -1,165 +1,205 @@
-import type { EntryRow } from '@/db/schema';
+import type { HabitGroupRow, HabitRow } from '@/db/schema';
 
-export const SPRCHA_VALUES = ['none', 'partial', 'full'] as const;
-export const PROTAHOVANI_VALUES = ['horni', 'dolni', 'cele'] as const;
-export const VERDICT_VALUES = ['win', 'loss'] as const;
+export const HABIT_KINDS = [
+  'scale',
+  'counter',
+  'duration',
+  'choice',
+  'boolean',
+  'text',
+] as const;
 
-export type Sprcha = (typeof SPRCHA_VALUES)[number];
-export type Protahovani = (typeof PROTAHOVANI_VALUES)[number];
-export type Verdict = (typeof VERDICT_VALUES)[number];
+export type HabitKind = (typeof HABIT_KINDS)[number];
+export type HabitRole = 'verdict' | 'note';
 
-/** Shape used by the form, the API and the seed file. */
-export type Entry = {
+export type ChoiceOption = { value: string; label: string };
+
+export type HabitConfig = {
+  min?: number;
+  max?: number;
+  step?: number;
+  unit?: string;
+  options?: ChoiceOption[];
+  /** A clearable choice can be tapped again to unset it. */
+  clearable?: boolean;
+  maxLength?: number;
+  placeholder?: string;
+  hint?: string;
+};
+
+export type Habit = {
+  id: number;
+  groupId: number | null;
+  key: string;
+  label: string;
+  kind: HabitKind;
+  config: HabitConfig;
+  role: HabitRole | null;
+  position: number;
+  archived: boolean;
+};
+
+export type HabitGroup = {
+  id: number;
+  key: string;
+  label: string;
+  position: number;
+  archived: boolean;
+};
+
+/** What a single habit holds on a single day. */
+export type HabitValue = number | string | boolean | null;
+
+export type DayEntry = {
   date: string;
-  energyMorning: number;
-  energyUsed: number;
-  kliky: number;
-  drepy: number;
-  shake: number;
-  sprcha: Sprcha;
-  protahovani: Protahovani | null;
-  dpMinutes: number;
-  instagram: boolean;
-  resolveNow: boolean;
-  verdict: Verdict | null;
-  note: string;
-  updatedAt?: string | null;
+  /** Keyed by habit key, so the API and the form speak the same language. */
+  values: Record<string, HabitValue>;
+  updatedAt: string | null;
 };
 
-export const SLIDERS = {
-  energyMorning: { min: 0, max: 100, step: 10 },
-  energyUsed: { min: 0, max: 100, step: 10 },
-  kliky: { min: 0, max: 250, step: 5 },
-  drepy: { min: 0, max: 250, step: 5 },
-  dpMinutes: { min: 0, max: 480, step: 15 },
-} as const;
-
-export const SPRCHA_LABELS: Record<Sprcha, string> = {
-  none: 'Žádná',
-  partial: 'Částečná',
-  full: 'Celá',
+/** Columns of entry_values; exactly one is ever non-null. */
+export type ValueColumns = {
+  num: number | null;
+  txt: string | null;
+  flag: boolean | null;
 };
 
-export const PROTAHOVANI_LABELS: Record<Protahovani, string> = {
-  horni: 'Horní',
-  dolni: 'Dolní',
-  cele: 'Celé',
-};
+const isKind = (v: unknown): v is HabitKind =>
+  (HABIT_KINDS as readonly string[]).includes(String(v));
 
-export const SHAKE_LABELS = ['0', '1', '2'];
-
-export function emptyEntry(date: string): Entry {
+export function rowToHabit(row: HabitRow): Habit {
   return {
-    date,
-    energyMorning: 0,
-    energyUsed: 0,
-    kliky: 0,
-    drepy: 0,
-    shake: 0,
-    sprcha: 'none',
-    protahovani: null,
-    dpMinutes: 0,
-    instagram: false,
-    resolveNow: false,
-    verdict: null,
-    note: '',
-    updatedAt: null,
+    id: row.id,
+    groupId: row.groupId,
+    key: row.key,
+    label: row.label,
+    kind: isKind(row.kind) ? row.kind : 'counter',
+    config: (row.config ?? {}) as HabitConfig,
+    role: row.role === 'verdict' || row.role === 'note' ? row.role : null,
+    position: row.position,
+    archived: row.archivedAt !== null,
   };
 }
 
-export function rowToEntry(row: EntryRow): Entry {
+export function rowToGroup(row: HabitGroupRow): HabitGroup {
   return {
-    date: row.date,
-    energyMorning: row.energyMorning,
-    energyUsed: row.energyUsed,
-    kliky: row.kliky,
-    drepy: row.drepy,
-    shake: row.shake,
-    sprcha: (SPRCHA_VALUES as readonly string[]).includes(row.sprcha)
-      ? (row.sprcha as Sprcha)
-      : 'none',
-    protahovani: (PROTAHOVANI_VALUES as readonly string[]).includes(
-      row.protahovani ?? '',
-    )
-      ? (row.protahovani as Protahovani)
-      : null,
-    dpMinutes: row.dpMinutes,
-    instagram: row.instagram,
-    resolveNow: row.resolveNow,
-    verdict: (VERDICT_VALUES as readonly string[]).includes(row.verdict ?? '')
-      ? (row.verdict as Verdict)
-      : null,
-    note: row.note,
-    updatedAt: row.updatedAt ? row.updatedAt.toISOString() : null,
+    id: row.id,
+    key: row.key,
+    label: row.label,
+    position: row.position,
+    archived: row.archivedAt !== null,
   };
 }
 
-const clampStep = (raw: unknown, min: number, max: number, step: number) => {
-  const n = Number(raw);
-  if (!Number.isFinite(n)) return min;
-  return Math.min(max, Math.max(min, Math.round(n / step) * step));
-};
+/** The value a habit holds on a day nothing was recorded. */
+export function defaultValue(habit: Habit): HabitValue {
+  switch (habit.kind) {
+    case 'scale':
+    case 'counter':
+    case 'duration':
+      return habit.config.min ?? 0;
+    case 'boolean':
+      return false;
+    case 'choice':
+      return habit.config.clearable
+        ? null
+        : (habit.config.options?.[0]?.value ?? null);
+    case 'text':
+      return '';
+  }
+}
 
 /**
- * Coerces arbitrary JSON (API body / seed file) into a valid Entry.
- * Anything missing or out of range falls back to the empty-day default,
- * so a bad payload can never write nonsense into the DB.
+ * Coerces anything — an API body, a seed file, a form post — into a value this
+ * habit can actually hold. Numbers are clamped and snapped to the habit's step,
+ * unknown choices fall back to the default. A malformed payload can shorten a
+ * day's record but can never write nonsense into it.
  */
-export function parseEntry(date: string, input: unknown): Entry {
-  const raw = (input ?? {}) as Record<string, unknown>;
-  const base = emptyEntry(date);
+export function coerceValue(habit: Habit, raw: unknown): HabitValue {
+  const cfg = habit.config;
 
-  const bool = (v: unknown, fallback: boolean) =>
-    typeof v === 'boolean' ? v : v === 'true' ? true : v === 'false' ? false : fallback;
+  switch (habit.kind) {
+    case 'scale':
+    case 'counter':
+    case 'duration': {
+      const min = cfg.min ?? 0;
+      const max = cfg.max ?? 1000;
+      const step = cfg.step && cfg.step > 0 ? cfg.step : 1;
+      const n = Number(raw);
+      if (!Number.isFinite(n)) return min;
+      const snapped = Math.round((n - min) / step) * step + min;
+      return Math.min(max, Math.max(min, snapped));
+    }
 
-  return {
-    date,
-    energyMorning:
-      raw.energyMorning === undefined
-        ? base.energyMorning
-        : clampStep(raw.energyMorning, 0, 100, 10),
-    energyUsed:
-      raw.energyUsed === undefined
-        ? base.energyUsed
-        : clampStep(raw.energyUsed, 0, 100, 10),
-    kliky: raw.kliky === undefined ? base.kliky : clampStep(raw.kliky, 0, 250, 5),
-    drepy: raw.drepy === undefined ? base.drepy : clampStep(raw.drepy, 0, 250, 5),
-    shake: raw.shake === undefined ? base.shake : clampStep(raw.shake, 0, 2, 1),
-    sprcha: (SPRCHA_VALUES as readonly string[]).includes(String(raw.sprcha))
-      ? (raw.sprcha as Sprcha)
-      : base.sprcha,
-    protahovani: (PROTAHOVANI_VALUES as readonly string[]).includes(
-      String(raw.protahovani),
-    )
-      ? (raw.protahovani as Protahovani)
-      : null,
-    dpMinutes:
-      raw.dpMinutes === undefined
-        ? base.dpMinutes
-        : clampStep(raw.dpMinutes, 0, 1440, 5),
-    instagram: bool(raw.instagram, base.instagram),
-    resolveNow: bool(raw.resolveNow, base.resolveNow),
-    verdict: (VERDICT_VALUES as readonly string[]).includes(String(raw.verdict))
-      ? (raw.verdict as Verdict)
-      : null,
-    note: typeof raw.note === 'string' ? raw.note.slice(0, 4000) : base.note,
-  };
+    case 'boolean':
+      if (typeof raw === 'boolean') return raw;
+      if (raw === 'true') return true;
+      if (raw === 'false') return false;
+      return false;
+
+    case 'choice': {
+      const allowed = (cfg.options ?? []).map((o) => o.value);
+      const v = String(raw);
+      if (allowed.includes(v)) return v;
+      return defaultValue(habit);
+    }
+
+    case 'text': {
+      if (typeof raw !== 'string') return '';
+      return raw.slice(0, cfg.maxLength ?? 4000);
+    }
+  }
 }
 
-/** A day counts as "logged" if anything at all was recorded on it. */
-export function isLogged(e: Entry): boolean {
-  return (
-    e.energyMorning > 0 ||
-    e.energyUsed > 0 ||
-    e.kliky > 0 ||
-    e.drepy > 0 ||
-    e.shake > 0 ||
-    e.sprcha !== 'none' ||
-    e.protahovani !== null ||
-    e.dpMinutes > 0 ||
-    e.instagram ||
-    e.resolveNow ||
-    e.verdict !== null ||
-    e.note.trim() !== ''
-  );
+/** Splits a value into the three storage columns. */
+export function valueToColumns(habit: Habit, value: HabitValue): ValueColumns {
+  const empty: ValueColumns = { num: null, txt: null, flag: null };
+
+  switch (habit.kind) {
+    case 'scale':
+    case 'counter':
+    case 'duration':
+      return { ...empty, num: typeof value === 'number' ? value : null };
+    case 'boolean':
+      return { ...empty, flag: typeof value === 'boolean' ? value : null };
+    case 'choice':
+    case 'text':
+      return { ...empty, txt: typeof value === 'string' ? value : null };
+  }
+}
+
+export function columnsToValue(habit: Habit, cols: ValueColumns): HabitValue {
+  switch (habit.kind) {
+    case 'scale':
+    case 'counter':
+    case 'duration':
+      return cols.num ?? defaultValue(habit);
+    case 'boolean':
+      return cols.flag ?? false;
+    case 'choice':
+      return cols.txt ?? defaultValue(habit);
+    case 'text':
+      return cols.txt ?? '';
+  }
+}
+
+/**
+ * Whether a value is worth a row. Storing only what differs from the default
+ * keeps "how much of today did I actually fill in" answerable — a habit with no
+ * row is one you skipped, not one you deliberately recorded as zero.
+ */
+export function isRecorded(habit: Habit, value: HabitValue): boolean {
+  const def = defaultValue(habit);
+  if (habit.kind === 'text') return typeof value === 'string' && value.trim() !== '';
+  return value !== def && value !== null;
+}
+
+export function emptyDay(date: string): DayEntry {
+  return { date, values: {}, updatedAt: null };
+}
+
+/** The value to show in the form: what was recorded, else the habit's default. */
+export function valueFor(entry: DayEntry, habit: Habit): HabitValue {
+  const v = entry.values[habit.key];
+  return v === undefined ? defaultValue(habit) : v;
 }

@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { getEntry, upsertEntry } from '@/lib/entries';
-import { parseEntry } from '@/lib/domain';
+import { getDay, toApiShape, upsertDay } from '@/lib/entries';
 import { isValidDate } from '@/lib/date';
 import { checkApiToken } from '@/lib/auth';
 
@@ -12,17 +11,16 @@ type Params = { params: Promise<{ date: string }> };
 // GET /api/entries/:date
 export async function GET(_request: Request, { params }: Params) {
   const { date } = await params;
-
   if (!isValidDate(date)) {
     return NextResponse.json({ error: 'Invalid date' }, { status: 400 });
   }
 
   try {
-    const entry = await getEntry(date);
-    if (!entry) {
+    const day = await getDay(date);
+    if (day.updatedAt === null && Object.keys(day.values).length === 0) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
-    return NextResponse.json({ entry });
+    return NextResponse.json({ entry: await toApiShape(day) });
   } catch (error) {
     console.error('GET /api/entries/:date failed', error);
     return NextResponse.json({ error: 'Database error' }, { status: 500 });
@@ -46,12 +44,23 @@ export async function PUT(request: Request, { params }: Params) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
+  if (typeof body !== 'object' || body === null || Array.isArray(body)) {
+    return NextResponse.json({ error: 'Body must be a JSON object' }, { status: 400 });
+  }
+
   try {
-    const entry = await upsertEntry(parseEntry(date, body));
+    const { ignored } = await upsertDay(date, body as Record<string, unknown>);
     revalidatePath('/');
     revalidatePath('/history');
     revalidatePath(`/day/${date}`);
-    return NextResponse.json({ entry });
+
+    const day = await getDay(date);
+    // Unknown keys are named rather than dropped in silence, so a typo in a
+    // relayed day shows up instead of looking like a successful write.
+    return NextResponse.json({
+      entry: await toApiShape(day),
+      ...(ignored.length > 0 ? { ignoredKeys: ignored } : {}),
+    });
   } catch (error) {
     console.error('PUT /api/entries/:date failed', error);
     return NextResponse.json({ error: 'Database error' }, { status: 500 });

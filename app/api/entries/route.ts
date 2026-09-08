@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAll, getRange } from '@/lib/entries';
+import { getAllDays, getRange, toApiShape } from '@/lib/entries';
 import { isValidDate } from '@/lib/date';
 
 export const dynamic = 'force-dynamic';
@@ -11,15 +11,16 @@ export async function GET(request: Request) {
   const to = searchParams.get('to');
 
   if ((from && !isValidDate(from)) || (to && !isValidDate(to))) {
-    return NextResponse.json(
-      { error: 'from/to must be YYYY-MM-DD' },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: 'from/to must be YYYY-MM-DD' }, { status: 400 });
   }
 
   try {
-    const data = from && to ? await getRange(from, to) : await getAll();
-    return NextResponse.json({ entries: data });
+    const days = from && to ? await getRange(from, to) : await getAllDays();
+    // Flat shape: one object per day, habit keys at the top level — the same
+    // JSON the PUT endpoint accepts, so a day can be read and written back.
+    return NextResponse.json({
+      entries: await Promise.all(days.map(toApiShape)),
+    });
   } catch (error) {
     console.error('GET /api/entries failed', error);
     return NextResponse.json({ error: 'Database error' }, { status: 500 });

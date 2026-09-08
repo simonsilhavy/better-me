@@ -1,0 +1,102 @@
+'use client';
+
+import type { Habit, HabitValue } from '@/lib/domain';
+import { Field } from './Field';
+import { Slider } from './Slider';
+import { Segmented } from './Segmented';
+import { Toggle } from './Toggle';
+
+function formatMinutes(min: number): string {
+  if (min === 0) return '0 min';
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  if (h === 0) return `${m} min`;
+  return m === 0 ? `${h} h` : `${h} h ${m} min`;
+}
+
+/** Renders whichever control this habit's kind calls for. */
+export function HabitControl({
+  habit,
+  value,
+  onChange,
+}: {
+  habit: Habit;
+  value: HabitValue;
+  onChange: (next: HabitValue) => void;
+}) {
+  const cfg = habit.config;
+
+  switch (habit.kind) {
+    case 'scale':
+    case 'counter':
+    case 'duration': {
+      const n = typeof value === 'number' ? value : (cfg.min ?? 0);
+      const display =
+        habit.kind === 'duration'
+          ? formatMinutes(n)
+          : `${n}${cfg.unit ? ` ${cfg.unit}` : ''}`;
+
+      return (
+        <Field label={habit.label} hint={cfg.hint} value={display}>
+          <Slider
+            ariaLabel={habit.label}
+            value={n}
+            min={cfg.min ?? 0}
+            max={cfg.max ?? 100}
+            step={cfg.step && cfg.step > 0 ? cfg.step : 1}
+            color={habit.key === 'energyUsed' ? 'var(--win)' : undefined}
+            onChange={onChange}
+          />
+        </Field>
+      );
+    }
+
+    case 'boolean':
+      return (
+        <Toggle
+          label={habit.label}
+          hint={cfg.hint}
+          checked={value === true}
+          onChange={onChange}
+        />
+      );
+
+    case 'choice': {
+      const current = typeof value === 'string' ? value : null;
+      const isVerdict = habit.role === 'verdict';
+      const options = cfg.options ?? [];
+
+      return (
+        <Field label={habit.label} hint={cfg.hint}>
+          <Segmented<string | null>
+            value={current}
+            clearable={cfg.clearable === true}
+            activeColor={
+              isVerdict
+                ? current === options[0]?.value
+                  ? 'var(--win)'
+                  : 'var(--loss)'
+                : undefined
+            }
+            onChange={(next) => onChange(next)}
+            options={options.map((o) => ({ value: o.value, label: o.label }))}
+          />
+        </Field>
+      );
+    }
+
+    case 'text':
+      return (
+        <Field label={habit.label} hint={cfg.hint}>
+          <textarea
+            value={typeof value === 'string' ? value : ''}
+            onChange={(e) => onChange(e.target.value)}
+            rows={4}
+            maxLength={cfg.maxLength ?? 4000}
+            placeholder={cfg.placeholder ?? ''}
+            className="w-full resize-y rounded-xl border border-[var(--border)] bg-[var(--panel-2)] p-3 text-sm text-[var(--text)] placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:outline-none"
+          />
+        </Field>
+      );
+  }
+}
