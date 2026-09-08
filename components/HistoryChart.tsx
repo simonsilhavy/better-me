@@ -67,7 +67,7 @@ export function HistoryChart({ data }: { data: Entry[] }) {
 
       <div className="h-56 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: -24 }}>
+          <BarChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
             <XAxis
               dataKey="label"
@@ -83,7 +83,7 @@ export function HistoryChart({ data }: { data: Entry[] }) {
               tick={{ fill: 'var(--muted)', fontSize: 11 }}
               tickLine={false}
               axisLine={false}
-              width={44}
+              width={34}
             />
             <Tooltip
               cursor={{ fill: 'rgba(255,255,255,0.04)' }}

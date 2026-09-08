@@ -46,3 +46,7 @@ next-env.d.ts
 
 # vercel
 .vercel
+
+# next.js agent rule files
+/AGENTS.md
+/CLAUDE.md
