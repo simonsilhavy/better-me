@@ -36,6 +36,15 @@ async function sign(secret: string, payload: string): Promise<string> {
     .join('');
 }
 
+/**
+ * The signing key mixes in the PIN, so changing the PIN invalidates every
+ * cookie already issued. Without this a stolen cookie would outlive the
+ * credential it was traded for, for a whole year.
+ */
+export function signingMaterial(secret: string, pin: string): string {
+  return `${secret}\u0000${pin}`;
+}
+
 export async function issueSession(secret: string): Promise<string> {
   const expiry = String(Date.now() + SESSION_MAX_AGE * 1000);
   return `${expiry}.${await sign(secret, expiry)}`;
@@ -73,5 +82,6 @@ export function timingSafeEqual(a: string, b: string): boolean {
 export function gateConfig() {
   const pin = process.env.APP_PIN;
   const secret = process.env.SESSION_SECRET;
-  return pin && secret ? { pin, secret } : null;
+  if (!pin || !secret) return null;
+  return { pin, sessionKey: signingMaterial(secret, pin) };
 }

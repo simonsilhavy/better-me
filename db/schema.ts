@@ -29,9 +29,11 @@ export const entries = pgTable('entries', {
  * combinations, so the lockout below is what actually makes it safe to use.
  */
 export const loginAttempts = pgTable('login_attempts', {
-  ip: text('ip').primaryKey(),
+  // A client IP, or GLOBAL_KEY for the account-wide backstop.
+  key: text('ip').primaryKey(),
   fails: integer('fails').notNull().default(0),
   lockedUntil: timestamp('locked_until', { withTimezone: true }),
+  windowStart: timestamp('window_start', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 

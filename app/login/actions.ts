@@ -18,10 +18,26 @@ import {
 
 export type LoginResult = { error: string } | void;
 
+/**
+ * `x-forwarded-for` is a list the client can prepend to, so its first entry is
+ * attacker-controlled — trusting it hands out a fresh rate-limit bucket per
+ * request. Vercel sets `x-real-ip` itself, and the last `x-forwarded-for` entry
+ * is the one its proxy appended, so both are outside the client's reach.
+ */
 async function clientIp(): Promise<string> {
   const h = await headers();
-  const forwarded = h.get('x-forwarded-for');
-  return forwarded?.split(',')[0]?.trim() || h.get('x-real-ip') || 'unknown';
+
+  const real = h.get('x-real-ip')?.trim();
+  if (real) return real;
+
+  const hops = h.get('x-forwarded-for')?.split(',') ?? [];
+  return hops.at(-1)?.trim() || 'unknown';
+}
+
+/** Only ever bounce back to a path on this site. */
+function safeNext(next: string): string {
+  // Browsers read a leading "//" or "/\" as protocol-relative, i.e. offsite.
+  return /^\/(?![/\\])[\w\-./?=&%]*$/.test(next) ? next : '/';
 }
 
 export async function submitPin(pin: string, next: string): Promise<LoginResult> {
@@ -54,7 +70,7 @@ export async function submitPin(pin: string, next: string): Promise<LoginResult>
   await clearFailures(ip);
 
   const store = await cookies();
-  store.set(SESSION_COOKIE, await issueSession(gate.secret), {
+  store.set(SESSION_COOKIE, await issueSession(gate.sessionKey), {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
@@ -62,6 +78,5 @@ export async function submitPin(pin: string, next: string): Promise<LoginResult>
     maxAge: SESSION_MAX_AGE,
   });
 
-  // Only ever bounce back to a path on this site.
-  redirect(next.startsWith('/') && !next.startsWith('//') ? next : '/');
+  redirect(safeNext(next));
 }

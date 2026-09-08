@@ -25,7 +25,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (await isValidSession(gate.secret, request.cookies.get(SESSION_COOKIE)?.value)) {
+  if (await isValidSession(gate.sessionKey, request.cookies.get(SESSION_COOKIE)?.value)) {
     return NextResponse.next();
   }
 
