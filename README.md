@@ -18,10 +18,27 @@ Replaces the single-file `better-me.html` artifact whose data lived hardcoded in
 | `/` | Today's entry (date resolved in `Europe/Prague`, not server UTC) |
 | `/day/[date]` | Any specific day, deep-linkable; prev/next arrows kept |
 | `/history` | Win/loss + streak stats, 14-day bar chart, full clickable history |
+| `/login` | Password gate, when one is configured |
+
+## Access control
+
+The whole app sits behind a password once **both** `APP_PASSWORD` and
+`SESSION_SECRET` are set — middleware redirects anything unauthenticated to
+`/login` and answers `/api/*` with `401`. With either variable missing the gate
+stays off and the app is open to anyone with the URL.
+
+Login sets an HTTP-only cookie holding `<expiry>.<hmac>`, signed with
+`SESSION_SECRET` and good for a year. The password never reaches the browser,
+and because the signing key is independent of it, a stolen cookie can't be
+walked back to the password.
+
+A request carrying `Authorization: Bearer $API_TOKEN` bypasses the gate, so
+scripts and the chat relay keep working while the UI stays private.
 
 ## API
 
-Reads are open, writes require a bearer token.
+Writes require a bearer token. Reads are open only while the password gate is
+off — once it's on, every `/api/*` request needs the same token.
 
 ```
 GET /api/entries                          # every entry, newest first
@@ -91,13 +108,13 @@ Upserts by date, so re-running is safe. The file currently ships as `[]`.
 1. Import the repo in Vercel.
 2. Vercel dashboard → **Storage → Neon** — the integration injects `DATABASE_URL`.
 3. Add `API_TOKEN` (`openssl rand -hex 32`) if you want API writes.
-4. `npm run db:push` once against the production `DATABASE_URL` to create the table.
+4. To make the app private, add `APP_PASSWORD` (what you type) and
+   `SESSION_SECRET` (`openssl rand -hex 32`), then redeploy.
+5. `npm run db:push` once against the production `DATABASE_URL` to create the table.
 
 ## Notes
 
-- No auth on the UI (single-user app, deliberate). The URL is the only thing
-  standing between the data and the internet; only the API's write path is
-  token-guarded.
+- Single-user app, so there are no accounts — one shared password, or none.
 - The dark theme lives as CSS variables at the top of `app/globals.css`
   (`--win` green / `--loss` red). `better-me.html` wasn't available during the
   port, so the palette is a close reconstruction rather than a byte-exact copy —
