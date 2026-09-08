@@ -116,9 +116,19 @@ export async function recordFailure(ip: string): Promise<ThrottleState> {
   return worst > 0 ? { blocked: true, retryAfterMs: worst } : { blocked: false };
 }
 
-/** Only clears the IP's own record — the global window is not a success signal. */
+/**
+ * Clears the IP's record and the global window together.
+ *
+ * A correct PIN proves the owner is at the keypad, which retires the "someone
+ * is guessing right now" hypothesis the global ceiling exists to answer.
+ * Leaving the global count standing meant ordinary typos accumulated across
+ * successful logins, invisibly, until an innocent-looking mistake tripped a
+ * lockout the owner had no way to see coming. It costs an attacker only the few
+ * extra guesses the owner's own logins hand back — nothing against a million
+ * combinations — and it stops the limit from fighting the person it protects.
+ */
 export async function clearFailures(ip: string): Promise<void> {
-  await db.delete(loginAttempts).where(eq(loginAttempts.key, ip));
+  await db.delete(loginAttempts).where(inArray(loginAttempts.key, [ip, GLOBAL_KEY]));
 }
 
 export function formatWait(ms: number): string {

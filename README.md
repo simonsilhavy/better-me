@@ -38,6 +38,11 @@ only a million combinations, so `login_attempts` rate-limits in two layers:
   the last line of defence. This one bounds total guesses regardless of source:
   a few dozen a day against a million combinations.
 
+A correct PIN clears both counters, the global one included: it proves the owner
+is at the keypad, which retires the question the global ceiling exists to ask.
+Without that, ordinary typos accumulated across successful logins until an
+innocent-looking mistake tripped a lockout with no visible cause.
+
 The counter is incremented inside `ON CONFLICT DO UPDATE`, where Postgres holds
 the row lock, so a burst of parallel guesses can't all read the same stale value
 and slip through together. A correct PIN is refused while any lockout stands.
