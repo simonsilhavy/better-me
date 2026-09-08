@@ -25,6 +25,18 @@ export const entries = pgTable('entries', {
 });
 
 /**
+ * Live sessions. A self-contained signed cookie can't be revoked, and browsers
+ * restore session cookies when they reopen ("continue where you left off"), so
+ * closing the browser did not end the session. Holding sessions server-side is
+ * what makes closing the app actually log you out.
+ */
+export const sessions = pgTable('sessions', {
+  id: text('id').primaryKey(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
  * Failed PIN attempts, per client IP. A 6-digit PIN is only a million
  * combinations, so the lockout below is what actually makes it safe to use.
  */

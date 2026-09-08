@@ -1,25 +1,16 @@
-/**
- * Cookie-based gate for the whole app. Runs in the Edge runtime (middleware),
- * so it uses Web Crypto only — no Node built-ins.
- *
- * The cookie is `<expiry>.<hmac>`, signed with SESSION_SECRET. The password
- * itself never reaches the browser and can't be recovered from a stolen
- * cookie, because the signing key is independent of it.
- */
+import { and, eq, gt, lt, sql } from 'drizzle-orm';
+import { db } from '@/db';
+import { sessions } from '@/db/schema';
 
 export const SESSION_COOKIE = 'bm_session';
 
 /**
- * How long a session survives without a request. The cookie itself carries no
- * Expires/Max-Age, so it also dies when the browser closes — between the two,
- * coming back to the app means entering the PIN again.
- *
- * Middleware slides this forward on every authenticated request, so the window
- * only runs down while the app is actually idle.
+ * Backstop lifetime. The page extends it with a heartbeat while it is open and
+ * drops the session outright when it closes, so this only decides how long a
+ * session lingers when the browser dies without a chance to say goodbye.
  */
-export const SESSION_IDLE_MS = 15 * 60_000;
+export const SESSION_TTL_MS = 2 * 60_000;
 
-/** Cookie attributes, shared by the login action and the sliding refresh. */
 export const SESSION_COOKIE_OPTIONS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
@@ -27,62 +18,58 @@ export const SESSION_COOKIE_OPTIONS = {
   path: '/',
 } as const;
 
-const encoder = new TextEncoder();
-let keyPromise: Promise<CryptoKey> | null = null;
-let keyFor = '';
-
-function signingKey(secret: string): Promise<CryptoKey> {
-  if (!keyPromise || keyFor !== secret) {
-    keyFor = secret;
-    keyPromise = crypto.subtle.importKey(
-      'raw',
-      encoder.encode(secret),
-      { name: 'HMAC', hash: 'SHA-256' },
-      false,
-      ['sign'],
-    );
-  }
-  return keyPromise;
+/** The gate is only active once a PIN is configured. */
+export function gateConfig() {
+  const pin = process.env.APP_PIN;
+  return pin ? { pin } : null;
 }
 
-async function sign(secret: string, payload: string): Promise<string> {
-  const key = await signingKey(secret);
-  const mac = await crypto.subtle.sign('HMAC', key, encoder.encode(payload));
-  return Array.from(new Uint8Array(mac))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
+function newSessionId(): string {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-/**
- * The signing key mixes in the PIN, so changing the PIN invalidates every
- * cookie already issued. Without this a stolen cookie would outlive the
- * credential it was traded for, for a whole year.
- */
-export function signingMaterial(secret: string, pin: string): string {
-  return `${secret}\u0000${pin}`;
+export async function createSession(): Promise<string> {
+  const id = newSessionId();
+  await db.insert(sessions).values({
+    id,
+    expiresAt: new Date(Date.now() + SESSION_TTL_MS),
+  });
+  return id;
 }
 
-export async function issueSession(secret: string): Promise<string> {
-  const expiry = String(Date.now() + SESSION_IDLE_MS);
-  return `${expiry}.${await sign(secret, expiry)}`;
+export async function isValidSession(id: string | undefined): Promise<boolean> {
+  if (!id || !/^[0-9a-f]{64}$/.test(id)) return false;
+
+  const [row] = await db
+    .select({ id: sessions.id })
+    .from(sessions)
+    .where(and(eq(sessions.id, id), gt(sessions.expiresAt, sql`now()`)))
+    .limit(1);
+
+  return Boolean(row);
 }
 
-export async function isValidSession(
-  secret: string,
-  cookie: string | undefined,
-): Promise<boolean> {
-  if (!cookie) return false;
+/** Extends a live session. Returns false if it has already gone. */
+export async function touchSession(id: string | undefined): Promise<boolean> {
+  if (!id || !/^[0-9a-f]{64}$/.test(id)) return false;
 
-  const sep = cookie.indexOf('.');
-  if (sep < 1) return false;
+  const [row] = await db
+    .update(sessions)
+    .set({ expiresAt: new Date(Date.now() + SESSION_TTL_MS) })
+    .where(and(eq(sessions.id, id), gt(sessions.expiresAt, sql`now()`)))
+    .returning({ id: sessions.id });
 
-  const expiry = cookie.slice(0, sep);
-  const mac = cookie.slice(sep + 1);
+  // Cheap opportunistic sweep; the table should never hold more than a few rows.
+  await db.delete(sessions).where(lt(sessions.expiresAt, sql`now()`));
 
-  const expiresAt = Number(expiry);
-  if (!Number.isFinite(expiresAt) || expiresAt < Date.now()) return false;
+  return Boolean(row);
+}
 
-  return timingSafeEqual(mac, await sign(secret, expiry));
+export async function closeSession(id: string | undefined): Promise<void> {
+  if (!id) return;
+  await db.delete(sessions).where(eq(sessions.id, id));
 }
 
 export function timingSafeEqual(a: string, b: string): boolean {
@@ -90,15 +77,4 @@ export function timingSafeEqual(a: string, b: string): boolean {
   let diff = 0;
   for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
   return diff === 0;
-}
-
-/**
- * The gate is only active once APP_PASSWORD is set, so an install that never
- * sets it keeps working exactly as before.
- */
-export function gateConfig() {
-  const pin = process.env.APP_PIN;
-  const secret = process.env.SESSION_SECRET;
-  if (!pin || !secret) return null;
-  return { pin, sessionKey: signingMaterial(secret, pin) };
 }

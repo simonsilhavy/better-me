@@ -46,10 +46,18 @@ The trade-off is deliberate and, at 2 per hour, sharp: three wrong guesses from
 anyone locks the app for everyone, so a stranger with the URL can keep the owner
 out. Denial of service beats disclosure for a personal tracker.
 
-Sessions are deliberately short-lived. The cookie carries no `Expires`, so it
-dies with the browser, and its signed idle window is 15 minutes, slid forward by
-middleware on each request. Coming back to the app means entering the PIN again.
-Because that can expire mid-entry, the form mirrors unsaved work into
+Sessions live in the `sessions` table, not inside the cookie, which holds only
+an opaque id. A self-contained signed cookie cannot be revoked, and browsers
+restore session cookies when they reopen ("continue where you left off"), so
+closing the browser did not actually end the session — the cookie came back
+intact and still verified.
+
+With the session server-side, closing the app ends it for real: `pagehide` sends
+a beacon to `/api/session/close`, which deletes the row. A heartbeat every 45 s
+holds the session open while the page is in use, and a 2-minute TTL is the
+backstop for a browser that dies without sending the beacon.
+
+Because a session can end mid-entry, the form mirrors unsaved work into
 `localStorage` and restores it after logging back in.
 
 Login sets an HTTP-only cookie holding `<expiry>.<hmac>`, signed with

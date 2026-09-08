@@ -5,8 +5,8 @@ import { redirect } from 'next/navigation';
 import {
   SESSION_COOKIE,
   SESSION_COOKIE_OPTIONS,
+  createSession,
   gateConfig,
-  issueSession,
   timingSafeEqual,
 } from '@/lib/session';
 import {
@@ -70,7 +70,7 @@ export async function submitPin(pin: string, next: string): Promise<LoginResult>
   await clearFailures(ip);
 
   const store = await cookies();
-  store.set(SESSION_COOKIE, await issueSession(gate.sessionKey), SESSION_COOKIE_OPTIONS);
+  store.set(SESSION_COOKIE, await createSession(), SESSION_COOKIE_OPTIONS);
 
   redirect(safeNext(next));
 }

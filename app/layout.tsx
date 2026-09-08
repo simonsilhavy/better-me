@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Header } from '@/components/Header';
+import { SessionKeeper } from '@/components/SessionKeeper';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -20,6 +21,7 @@ export default function RootLayout({
     <html lang="cs">
       <body className="min-h-screen antialiased">
         <div className="mx-auto max-w-xl px-4 py-5">
+          <SessionKeeper />
           <Header />
           {children}
         </div>

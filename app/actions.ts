@@ -3,7 +3,7 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
-import { SESSION_COOKIE } from '@/lib/session';
+import { SESSION_COOKIE, closeSession } from '@/lib/session';
 import { upsertEntry } from '@/lib/entries';
 import { type Entry, parseEntry } from '@/lib/domain';
 import { isValidDate } from '@/lib/date';
@@ -31,6 +31,7 @@ export async function saveEntry(input: Entry): Promise<SaveResult> {
 
 export async function logout(): Promise<void> {
   const store = await cookies();
+  await closeSession(store.get(SESSION_COOKIE)?.value);
   store.delete(SESSION_COOKIE);
   redirect('/login');
 }

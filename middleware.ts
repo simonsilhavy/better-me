@@ -1,16 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import {
-  SESSION_COOKIE,
-  SESSION_COOKIE_OPTIONS,
-  gateConfig,
-  isValidSession,
-  issueSession,
-  timingSafeEqual,
-} from '@/lib/session';
+import { SESSION_COOKIE, gateConfig, isValidSession, timingSafeEqual } from '@/lib/session';
 
 export const config = {
   // Everything except Next's own static output and the favicon.
   matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  // Sessions live in Postgres, so the check needs a real runtime.
+  runtime: 'nodejs',
 };
 
 export async function middleware(request: NextRequest) {
@@ -21,7 +16,7 @@ export async function middleware(request: NextRequest) {
   if (pathname === '/login') return NextResponse.next();
 
   // Scripts and the chat relay authenticate with the API token instead of the
-  // password, so automation keeps working while the UI stays gated.
+  // PIN, so automation keeps working while the UI stays gated.
   const apiToken = process.env.API_TOKEN;
   const header = request.headers.get('authorization') ?? '';
   if (
@@ -32,16 +27,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (await isValidSession(gate.sessionKey, request.cookies.get(SESSION_COOKIE)?.value)) {
-    // Slide the idle window forward, so it only runs down while the app is
-    // genuinely unused rather than mid-session.
-    const response = NextResponse.next();
-    response.cookies.set(
-      SESSION_COOKIE,
-      await issueSession(gate.sessionKey),
-      SESSION_COOKIE_OPTIONS,
-    );
-    return response;
+  if (await isValidSession(request.cookies.get(SESSION_COOKIE)?.value)) {
+    return NextResponse.next();
   }
 
   if (pathname.startsWith('/api/')) {
