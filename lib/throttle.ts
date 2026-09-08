@@ -22,7 +22,7 @@ const MAX_LOCK_SECONDS = 60 * 60;
 const DECAY_MINUTES = 30;
 
 export const GLOBAL_KEY = '__global__';
-const GLOBAL_MAX_PER_HOUR = 60;
+const GLOBAL_MAX_PER_HOUR = 2;
 const GLOBAL_LOCK_SECONDS = 15 * 60;
 
 export type ThrottleState =

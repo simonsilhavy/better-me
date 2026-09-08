@@ -1,6 +1,9 @@
 'use server';
 
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
+import { SESSION_COOKIE } from '@/lib/session';
 import { upsertEntry } from '@/lib/entries';
 import { type Entry, parseEntry } from '@/lib/domain';
 import { isValidDate } from '@/lib/date';
@@ -24,4 +27,10 @@ export async function saveEntry(input: Entry): Promise<SaveResult> {
   revalidatePath(`/day/${input.date}`);
 
   return { ok: true, savedAt: new Date().toISOString() };
+}
+
+export async function logout(): Promise<void> {
+  const store = await cookies();
+  store.delete(SESSION_COOKIE);
+  redirect('/login');
 }

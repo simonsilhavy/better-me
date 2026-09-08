@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { saveEntry } from '@/app/actions';
@@ -27,6 +27,38 @@ function formatMinutes(min: number): string {
   return m === 0 ? `${h} h` : `${h} h ${m} min`;
 }
 
+/**
+ * A half-written day survives a reload or an idle logout. Sessions are short by
+ * design, and losing a note you were still typing because the gate timed out
+ * would be a bad trade.
+ */
+const draftKey = (date: string) => `bm-draft-${date}`;
+
+function readDraft(date: string): Entry | null {
+  try {
+    const raw = localStorage.getItem(draftKey(date));
+    return raw ? (JSON.parse(raw) as Entry) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeDraft(entry: Entry): void {
+  try {
+    localStorage.setItem(draftKey(entry.date), JSON.stringify(entry));
+  } catch {
+    // Private mode, or storage full — the form still works, just without a net.
+  }
+}
+
+function clearDraft(date: string): void {
+  try {
+    localStorage.removeItem(draftKey(date));
+  } catch {
+    // Nothing to do; a stale draft is harmless.
+  }
+}
+
 export function EntryForm({ initial }: { initial: Entry }) {
   const router = useRouter();
   const [entry, setEntry] = useState<Entry>(initial);
@@ -34,9 +66,29 @@ export function EntryForm({ initial }: { initial: Entry }) {
   const [status, setStatus] = useState<'idle' | 'saved' | 'error'>('idle');
   const [message, setMessage] = useState('');
   const [pending, startTransition] = useTransition();
+  const restored = useRef(false);
+
+  // Restore before the first edit, so a reload doesn't drop unsaved work.
+  useEffect(() => {
+    if (restored.current) return;
+    restored.current = true;
+
+    const draft = readDraft(initial.date);
+    if (draft && JSON.stringify(draft) !== JSON.stringify(initial)) {
+      // Reading localStorage is exactly the external-system sync an effect is
+      // for, and it can't happen during render without breaking hydration.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setEntry({ ...draft, date: initial.date });
+      setDirty(true);
+    }
+  }, [initial]);
 
   const set = <K extends keyof Entry>(key: K, value: Entry[K]) => {
-    setEntry((prev) => ({ ...prev, [key]: value }));
+    setEntry((prev) => {
+      const next = { ...prev, [key]: value };
+      writeDraft(next);
+      return next;
+    });
     setDirty(true);
     setStatus('idle');
   };
@@ -45,6 +97,7 @@ export function EntryForm({ initial }: { initial: Entry }) {
     startTransition(async () => {
       const result = await saveEntry(entry);
       if (result.ok) {
+        clearDraft(entry.date);
         setDirty(false);
         setStatus('saved');
         setMessage('Uloženo');

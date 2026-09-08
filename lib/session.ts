@@ -8,7 +8,24 @@
  */
 
 export const SESSION_COOKIE = 'bm_session';
-export const SESSION_MAX_AGE = 60 * 60 * 24 * 365; // a year — this is a phone app
+
+/**
+ * How long a session survives without a request. The cookie itself carries no
+ * Expires/Max-Age, so it also dies when the browser closes — between the two,
+ * coming back to the app means entering the PIN again.
+ *
+ * Middleware slides this forward on every authenticated request, so the window
+ * only runs down while the app is actually idle.
+ */
+export const SESSION_IDLE_MS = 15 * 60_000;
+
+/** Cookie attributes, shared by the login action and the sliding refresh. */
+export const SESSION_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax',
+  path: '/',
+} as const;
 
 const encoder = new TextEncoder();
 let keyPromise: Promise<CryptoKey> | null = null;
@@ -46,7 +63,7 @@ export function signingMaterial(secret: string, pin: string): string {
 }
 
 export async function issueSession(secret: string): Promise<string> {
-  const expiry = String(Date.now() + SESSION_MAX_AGE * 1000);
+  const expiry = String(Date.now() + SESSION_IDLE_MS);
   return `${expiry}.${await sign(secret, expiry)}`;
 }
 

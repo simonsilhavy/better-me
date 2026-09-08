@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { logout } from '@/app/actions';
 
 export function Header() {
   const pathname = usePathname();
@@ -19,6 +20,16 @@ export function Header() {
         <Link href="/history" className="bm-seg rounded-lg px-3 py-1.5">
           Historie
         </Link>
+        <form action={logout}>
+          <button
+            type="submit"
+            aria-label="Odhlásit"
+            title="Odhlásit"
+            className="bm-seg cursor-pointer rounded-lg px-3 py-1.5"
+          >
+            ⏻
+          </button>
+        </form>
       </nav>
     </header>
   );

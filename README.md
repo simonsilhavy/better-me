@@ -32,18 +32,25 @@ only a million combinations, so `login_attempts` rate-limits in two layers:
 
 - **Per IP** — two free tries, then a lockout doubling from 30 s to an hour,
   forgotten after 30 quiet minutes. This is the layer an honest typo meets.
-- **Globally** — at most 60 failures per rolling hour across every client, then
+- **Globally** — at most 2 failures per rolling hour across every client, then
   everything locks for 15 minutes. Client IP is self-reported at the edge of any
   CDN and a proxy pool grants unlimited identities, so the per-IP layer cannot be
   the last line of defence. This one bounds total guesses regardless of source:
-  roughly 1,400 a day against a million combinations.
+  a few dozen a day against a million combinations.
 
 The counter is incremented inside `ON CONFLICT DO UPDATE`, where Postgres holds
 the row lock, so a burst of parallel guesses can't all read the same stale value
 and slip through together. A correct PIN is refused while any lockout stands.
 
-The trade-off is deliberate: an attacker grinding the global limit can keep the
-owner locked out too. Denial of service beats disclosure for a personal tracker.
+The trade-off is deliberate and, at 2 per hour, sharp: three wrong guesses from
+anyone locks the app for everyone, so a stranger with the URL can keep the owner
+out. Denial of service beats disclosure for a personal tracker.
+
+Sessions are deliberately short-lived. The cookie carries no `Expires`, so it
+dies with the browser, and its signed idle window is 15 minutes, slid forward by
+middleware on each request. Coming back to the app means entering the PIN again.
+Because that can expire mid-entry, the form mirrors unsaved work into
+`localStorage` and restores it after logging back in.
 
 Login sets an HTTP-only cookie holding `<expiry>.<hmac>`, signed with
 `SESSION_SECRET` and good for a year. The password never reaches the browser,

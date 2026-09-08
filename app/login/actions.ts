@@ -4,7 +4,7 @@ import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import {
   SESSION_COOKIE,
-  SESSION_MAX_AGE,
+  SESSION_COOKIE_OPTIONS,
   gateConfig,
   issueSession,
   timingSafeEqual,
@@ -70,13 +70,7 @@ export async function submitPin(pin: string, next: string): Promise<LoginResult>
   await clearFailures(ip);
 
   const store = await cookies();
-  store.set(SESSION_COOKIE, await issueSession(gate.sessionKey), {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    maxAge: SESSION_MAX_AGE,
-  });
+  store.set(SESSION_COOKIE, await issueSession(gate.sessionKey), SESSION_COOKIE_OPTIONS);
 
   redirect(safeNext(next));
 }
