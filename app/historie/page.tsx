@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Heatmap, type HeatDay } from '@/components/Heatmap';
 import { PeriodPicker } from '@/components/PeriodPicker';
 import { Sparkline } from '@/components/Sparkline';
-import { getAllDays, getGroups, getHabits, getRange, getStats } from '@/lib/entries';
+import { getDaySummaries, getEarliestDate, getGroups, getHabits, getRange, getStats } from '@/lib/entries';
 import { periodStats, previousWindow, formatValue, dayIsLogged } from '@/lib/history';
 import { addDays, dateRange, formatCz, today, weekday } from '@/lib/date';
 import type { DayEntry, Habit } from '@/lib/domain';
@@ -42,14 +42,15 @@ export default async function HistoryPage({
   const days = Number.isFinite(period) && period > 0 ? period : 0;
 
   const end = today();
-  const [allDays, habits, groups, stats] = await Promise.all([
-    getAllDays(),
+  const [summaries, earliestDate, habits, groups, stats] = await Promise.all([
+    getDaySummaries(),
+    getEarliestDate(),
     getHabits(true),
     getGroups(),
     getStats(),
   ]);
 
-  const earliest = allDays.length > 0 ? allDays[allDays.length - 1].date : end;
+  const earliest = earliestDate ?? end;
   const start = days > 0 ? addDays(end, -(days - 1)) : earliest;
 
   const prev = previousWindow(start, end);
@@ -169,18 +170,18 @@ export default async function HistoryPage({
 
       <div className="bm-card overflow-hidden">
         <h2 className="border-b border-[var(--border)] px-4 py-3 text-sm font-semibold">
-          Zapsané dny ({allDays.length})
+          Zapsané dny ({summaries.length})
         </h2>
-        {allDays.length === 0 ? (
+        {summaries.length === 0 ? (
           <p className="px-4 py-8 text-center text-sm text-[var(--muted)]">
             Zatím žádné záznamy. Začni{' '}
             <Link href="/" className="underline" style={{ color: 'var(--accent)' }}>dneškem</Link>.
           </p>
         ) : (
           <ul className="max-h-[50vh] divide-y divide-[var(--border)] overflow-y-auto">
-            {allDays.map((day) => {
-              const raw = verdictHabit ? day.values[verdictHabit.key] : undefined;
-              const filled = active.filter((h) => day.values[h.key] !== undefined).length;
+            {summaries.map((day) => {
+              const raw = verdictHabit ? day.verdict : undefined;
+              const filled = day.filled;
               return (
                 <li key={day.date}>
                   <Link href={`/den/${day.date}`} className="flex items-center gap-3 px-4 py-3 hover:bg-[var(--panel-2)]">

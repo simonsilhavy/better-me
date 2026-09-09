@@ -141,14 +141,52 @@ export async function getAllDays(): Promise<DayEntry[]> {
  * chat relay reads a day, edits a field and writes it back, and a key that
  * silently vanishes would drop the rest of the day with it.
  */
-export async function toApiShape(day: DayEntry): Promise<Record<string, unknown>> {
-  const active = await getHabits();
+export function toApiShape(day: DayEntry, active: Habit[]): Record<string, unknown> {
   const out: Record<string, unknown> = { date: day.date };
   for (const habit of active) {
     out[habit.key] = day.values[habit.key] ?? defaultValue(habit);
   }
   out.updatedAt = day.updatedAt;
   return out;
+}
+
+/** Shapes a whole range with one habit lookup rather than one per day. */
+export async function toApiShapes(days: DayEntry[]): Promise<Record<string, unknown>[]> {
+  const active = await getHabits();
+  return days.map((d) => toApiShape(d, active));
+}
+
+export type DaySummary = { date: string; filled: number; verdict: string | null };
+
+/**
+ * One row per logged day with just what a list needs: how much was filled in,
+ * and the verdict. Materialising every value to count them meant pulling a
+ * year of rows over the wire to render a list of dates.
+ */
+export async function getDaySummaries(): Promise<DaySummary[]> {
+  const rows = await db
+    .select({
+      date: entries.date,
+      filled: sql<number>`count(${entryValues.habitId}) filter (where ${habits.archivedAt} is null)::int`,
+      verdict: sql<string | null>`max(case when ${habits.role} = 'verdict' then ${entryValues.txt} end)`,
+    })
+    .from(entries)
+    .leftJoin(entryValues, eq(entryValues.date, entries.date))
+    .leftJoin(habits, eq(habits.id, entryValues.habitId))
+    .groupBy(entries.date)
+    .orderBy(desc(entries.date));
+
+  return rows.map((r) => ({ date: r.date, filled: r.filled, verdict: r.verdict }));
+}
+
+/** The first day ever logged, for an "all time" period. */
+export async function getEarliestDate(): Promise<string | null> {
+  const [row] = await db
+    .select({ date: entries.date })
+    .from(entries)
+    .orderBy(asc(entries.date))
+    .limit(1);
+  return row?.date ?? null;
 }
 
 export type SaveOutcome = { saved: string[]; ignored: string[] };

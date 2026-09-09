@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { HistoryChart } from '@/components/HistoryChart';
 import { PeriodPicker } from '@/components/PeriodPicker';
-import { getAllDays, getHabits, getRange } from '@/lib/entries';
+import { getEarliestDate, getHabits, getRange } from '@/lib/entries';
 import { formatValue, metricFor, periodStats, previousWindow } from '@/lib/history';
 import { addDays, dateRange, formatCz, today, weekday } from '@/lib/date';
 import { isRecorded } from '@/lib/domain';
@@ -26,8 +26,7 @@ export default async function HabitDetailPage({
   if (!habit) notFound();
 
   const end = today();
-  const all = await getAllDays();
-  const earliest = all.length > 0 ? all[all.length - 1].date : end;
+  const earliest = (await getEarliestDate()) ?? end;
   const start = days > 0 ? addDays(end, -(days - 1)) : earliest;
 
   const prev = previousWindow(start, end);

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAllDays, getRange, toApiShape } from '@/lib/entries';
+import { getAllDays, getRange, toApiShapes } from '@/lib/entries';
 import { isValidDate } from '@/lib/date';
 
 export const dynamic = 'force-dynamic';
@@ -19,7 +19,7 @@ export async function GET(request: Request) {
     // Flat shape: one object per day, habit keys at the top level — the same
     // JSON the PUT endpoint accepts, so a day can be read and written back.
     return NextResponse.json({
-      entries: await Promise.all(days.map(toApiShape)),
+      entries: await toApiShapes(days),
     });
   } catch (error) {
     console.error('GET /api/entries failed', error);

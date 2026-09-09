@@ -15,10 +15,14 @@ config();
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { upsertDay } from '../lib/entries';
-import { isValidDate } from '../lib/date';
 
 async function main() {
+  // Imported after the env is loaded: the database client reads DATABASE_URL
+  // when its module is first evaluated, and static imports are hoisted above
+  // the config() calls above.
+  const { upsertDay } = await import('../lib/entries');
+  const { isValidDate } = await import('../lib/date');
+
   const file = resolve(process.cwd(), 'seed-data.json');
   const raw = JSON.parse(readFileSync(file, 'utf8')) as unknown;
 

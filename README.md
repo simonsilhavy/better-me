@@ -194,6 +194,10 @@ npm run db:seed:habits   # 5 groups and 12 habits — safe to re-run
 npm run db:seed          # day records from seed-data.json
 ```
 
+Both were rehearsed from an empty database: dropping every table, replaying
+`drizzle/` and re-seeding reproduces the same 5 groups and 12 habits, and
+running either again changes nothing.
+
 `seed-data.json` is an array of day objects whose fields are habit keys, i.e.
 exactly what `PUT /api/entries/:date` accepts. It ships as `[]`. Both upsert, so
 re-running is safe; the habit seed never overwrites a habit you have since
