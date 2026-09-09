@@ -79,6 +79,8 @@ export function EntryForm({
   const savedRevision = useRef(0);
   const [dayDone, setDayDone] = useState(false);
   const wasDayComplete = useRef(false);
+  /** False until the first settled render, so opening a finished day is quiet. */
+  const dayArmed = useRef(false);
 
   // Restore before the first edit, so a reload doesn't drop unsaved work.
   useEffect(() => {
@@ -196,7 +198,16 @@ export function EntryForm({
 
   // The day's single closing moment. It fires for having written the day down
   // — never for how the day went — which is the rule the whole app rests on.
+  //
+  // It marks the moment of finishing, not the state of being finished, so the
+  // first render only records a baseline: paging back to a day that was
+  // completed weeks ago should be quiet, not congratulate you again.
   useEffect(() => {
+    if (!dayArmed.current) {
+      dayArmed.current = true;
+      wasDayComplete.current = dayComplete;
+      return;
+    }
     if (!dayComplete) {
       // No reset here on purpose: the banner runs out on its own timer, and
       // clearing it from the effect body only causes an extra render pass.
