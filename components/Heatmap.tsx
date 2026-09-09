@@ -16,9 +16,13 @@ function weekdayIndex(date: string): number {
 }
 
 /**
- * One square per day, laid out in weeks. Colour carries the verdict where there
- * is one; without a verdict habit it falls back to "was anything recorded",
- * which is the question the calendar can still answer.
+ * One square per day, laid out in weeks.
+ *
+ * Colour answers "did I write it down", never "did it go well". That is the
+ * app's governing rule: a day recorded honestly must never look worse than a
+ * day left blank, or the calendar quietly pays you to stay silent about bad
+ * days. The verdict still shows — as a small dot in the corner and in the
+ * tooltip — but it never drives the square itself.
  */
 export function Heatmap({ days, hasVerdict }: { days: HeatDay[]; hasVerdict: boolean }) {
   if (days.length === 0) return null;
@@ -26,13 +30,10 @@ export function Heatmap({ days, hasVerdict }: { days: HeatDay[]; hasVerdict: boo
   const lead = weekdayIndex(days[0].date);
   const cells: (HeatDay | null)[] = [...Array(lead).fill(null), ...days];
 
-  const fill = (day: HeatDay) => {
-    if (hasVerdict) {
-      if (day.verdict === 'win') return 'var(--win)';
-      if (day.verdict === 'loss') return 'var(--loss)';
-      return day.logged ? 'var(--border)' : 'transparent';
-    }
-    return day.logged ? 'var(--accent)' : 'transparent';
+  const title = (day: HeatDay) => {
+    const head = `${formatCz(day.date)} — ${day.logged ? 'zapsáno' : 'nezapsáno'}`;
+    if (!day.verdict) return head;
+    return `${head}, ${day.verdict === 'win' ? 'výhra' : 'prohra'}`;
   };
 
   return (
@@ -53,35 +54,47 @@ export function Heatmap({ days, hasVerdict }: { days: HeatDay[]; hasVerdict: boo
             <Link
               key={day.date}
               href={`/den/${day.date}`}
-              title={`${formatCz(day.date)}${day.verdict ? ` — ${day.verdict === 'win' ? 'výhra' : 'prohra'}` : day.logged ? ' — zapsáno' : ' — nezapsáno'}`}
-              className="aspect-square rounded-[4px] border border-[var(--border)] transition-transform hover:scale-110"
-              style={{ background: fill(day) }}
-            />
+              title={title(day)}
+              className="relative aspect-square rounded-[4px] border border-[var(--border)] transition-transform hover:scale-110"
+              style={{ background: day.logged ? 'var(--accent)' : 'transparent' }}
+            >
+              {day.verdict && (
+                <span
+                  aria-hidden
+                  className="absolute bottom-[2px] right-[2px] h-[5px] w-[5px] rounded-full"
+                  style={{
+                    background: day.verdict === 'win' ? 'var(--win)' : 'var(--loss)',
+                  }}
+                />
+              )}
+            </Link>
           ),
         )}
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-3 text-[11px] text-[var(--muted)]">
-        {hasVerdict ? (
+        <Legend color="var(--accent)" label="zapsaný den" />
+        <Legend color="transparent" label="nezapsáno" />
+        {hasVerdict && (
           <>
-            <Legend color="var(--win)" label="výhra" />
-            <Legend color="var(--loss)" label="prohra" />
-            <Legend color="var(--border)" label="zapsáno bez verdiktu" />
+            <Legend color="var(--win)" label="výhra" dot />
+            <Legend color="var(--loss)" label="prohra" dot />
           </>
-        ) : (
-          <Legend color="var(--accent)" label="zapsaný den" />
         )}
-        <Legend color="transparent" label="nic" />
       </div>
     </div>
   );
 }
 
-function Legend({ color, label }: { color: string; label: string }) {
+function Legend({ color, label, dot }: { color: string; label: string; dot?: boolean }) {
   return (
     <span className="flex items-center gap-1.5">
       <span
-        className="h-3 w-3 rounded-[3px] border border-[var(--border)]"
+        className={
+          dot
+            ? 'h-[6px] w-[6px] rounded-full'
+            : 'h-3 w-3 rounded-[3px] border border-[var(--border)]'
+        }
         style={{ background: color }}
       />
       {label}

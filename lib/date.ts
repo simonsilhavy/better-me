@@ -57,3 +57,13 @@ export function shortLabel(date: string): string {
   const [, m, d] = date.split('-').map(Number);
   return `${d}.${m}.`;
 }
+
+/**
+ * Czech counts days in three shapes: 1 den, 2-4 dny, 5+ dní. Getting this
+ * wrong reads as broken text, so the count and the noun travel together.
+ */
+export function czDays(n: number): string {
+  if (n === 1) return '1 den';
+  if (n >= 2 && n <= 4) return `${n} dny`;
+  return `${n} dní`;
+}

@@ -4,7 +4,7 @@ import { PeriodPicker } from '@/components/PeriodPicker';
 import { Sparkline } from '@/components/Sparkline';
 import { getDaySummaries, getEarliestDate, getGroups, getHabits, getRange, getStats } from '@/lib/entries';
 import { periodStats, previousWindow, formatValue, dayIsLogged } from '@/lib/history';
-import { addDays, dateRange, formatCz, today, weekday } from '@/lib/date';
+import { addDays, czDays, dateRange, formatCz, today, weekday } from '@/lib/date';
 import type { DayEntry, Habit } from '@/lib/domain';
 
 export const dynamic = 'force-dynamic';
@@ -91,22 +91,34 @@ export default async function HistoryPage({
     <div className="flex flex-col gap-4 pb-12">
       <PeriodPicker current={days} />
 
+      {/* Recording comes first and gets the accent; results sit underneath in
+          a quieter row. The app celebrates that a day was written down, never
+          how it turned out — a loud win counter buys silence about bad days. */}
+      <div className="grid grid-cols-2 gap-2">
+        <Stat
+          label="Zapsáno v období"
+          value={`${loggedInPeriod}/${dates.length}`}
+          color="var(--accent)"
+        />
+        <Stat
+          label="Zapsáno v kuse"
+          value={czDays(stats.logStreak)}
+          color="var(--accent)"
+        />
+      </div>
+
       {/* The verdict habit is removable, so these tiles have to disappear
           rather than render zeros that read as real results. */}
-      {stats.verdict ? (
-        <div className="grid grid-cols-4 gap-2">
-          <Stat label="Výhry" value={String(stats.verdict.wins)} color="var(--win)" />
-          <Stat label="Prohry" value={String(stats.verdict.losses)} color="var(--loss)" />
-          <Stat
-            label={stats.verdict.streakKind === winValue ? 'Série výher' : 'Série proher'}
-            value={String(stats.verdict.streak)}
-            color={stats.verdict.streakKind === winValue ? 'var(--win)' : 'var(--loss)'}
-          />
-          <Stat label="Zapsáno" value={`${loggedInPeriod}/${dates.length}`} />
+      {stats.verdict && (
+        <div className="grid grid-cols-3 gap-2">
+          <Stat label="Výhry" value={String(stats.verdict.wins)} />
+          <Stat label="Prohry" value={String(stats.verdict.losses)} />
+          <Stat label="Sledovaných habitů" value={String(active.length)} />
         </div>
-      ) : (
-        <div className="grid grid-cols-2 gap-2">
-          <Stat label="Zapsaných dní v období" value={`${loggedInPeriod}/${dates.length}`} />
+      )}
+
+      {!stats.verdict && (
+        <div className="grid grid-cols-1 gap-2">
           <Stat label="Sledovaných habitů" value={String(active.length)} />
         </div>
       )}

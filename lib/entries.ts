@@ -15,6 +15,7 @@ import {
   rowToHabit,
   valueToColumns,
 } from './domain';
+import { addDays, today } from './date';
 import { questionForDate } from './retro';
 
 /* ---------------------------------------------------------------- definice */
@@ -293,8 +294,10 @@ export async function upsertDay(
 
 export type Stats = {
   /** Absent when no habit carries the verdict role — the screen degrades. */
-  verdict: { habit: Habit; wins: number; losses: number; streak: number; streakKind: string | null } | null;
+  verdict: { habit: Habit; wins: number; losses: number } | null;
   loggedDays: number;
+  /** Consecutive days written down, counting back from today or yesterday. */
+  logStreak: number;
 };
 
 export async function getStats(): Promise<Stats> {
@@ -305,7 +308,9 @@ export async function getStats(): Promise<Stats> {
     .select({ n: sql<number>`count(*)::int` })
     .from(entries);
 
-  if (!verdictHabit) return { verdict: null, loggedDays };
+  const logStreak = await getLogStreak();
+
+  if (!verdictHabit) return { verdict: null, loggedDays, logStreak };
 
   const options = verdictHabit.config.options ?? [];
   const winValue = options[0]?.value ?? 'win';
@@ -324,18 +329,39 @@ export async function getStats(): Promise<Stats> {
     else if (row.txt === lossValue) losses++;
   }
 
-  let streak = 0;
-  let streakKind: string | null = null;
-  if (judged.length > 0) {
-    streakKind = judged[0].txt;
-    for (const row of judged) {
-      if (row.txt !== streakKind) break;
-      streak++;
-    }
-  }
-
   return {
-    verdict: { habit: verdictHabit, wins, losses, streak, streakKind },
+    verdict: { habit: verdictHabit, wins, losses },
     loggedDays,
+    logStreak,
   };
+}
+
+/**
+ * How many days in a row carry at least one recorded value.
+ *
+ * Deliberately counts *writing things down*, not doing well — this is the one
+ * streak the app is allowed to celebrate. Today not being filled in yet does
+ * not break it: an unfinished today is not a missed day, so the count starts
+ * at yesterday whenever today is still empty.
+ */
+async function getLogStreak(): Promise<number> {
+  const rows = await db
+    .select({ date: entries.date })
+    .from(entries)
+    .innerJoin(entryValues, eq(entryValues.date, entries.date))
+    .groupBy(entries.date)
+    .orderBy(desc(entries.date));
+
+  const filled = new Set(rows.map((r) => r.date));
+  if (filled.size === 0) return 0;
+
+  const now = today();
+  let cursor = filled.has(now) ? now : addDays(now, -1);
+
+  let streak = 0;
+  while (filled.has(cursor)) {
+    streak++;
+    cursor = addDays(cursor, -1);
+  }
+  return streak;
 }
