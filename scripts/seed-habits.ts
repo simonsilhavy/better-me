@@ -139,7 +139,7 @@ const PLAN: { key: string; label: string; habits: SeedHabit[] }[] = [
     key: 'retrospektiva',
     label: 'Retrospektiva',
     habits: [
-      { key: 'retro', label: 'Retrospektiva', kind: 'retro', config: { maxLength: 4000, questions: RETRO_QUESTIONS } },
+      { key: 'retro', label: 'Retrospektiva', kind: 'retro', config: { maxLength: 4000, hideLabel: true, questions: RETRO_QUESTIONS } },
     ],
   },
   {

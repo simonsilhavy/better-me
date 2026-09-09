@@ -89,7 +89,7 @@ const NEW_HABITS = [
     key: 'retro',
     label: 'Retrospektiva',
     kind: 'retro',
-    config: { maxLength: 4000, questions: RETRO_QUESTIONS },
+    config: { maxLength: 4000, hideLabel: true, questions: RETRO_QUESTIONS },
   },
 ];
 

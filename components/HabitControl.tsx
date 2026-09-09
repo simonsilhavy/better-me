@@ -127,10 +127,12 @@ export function HabitControl({
         <div className="bm-card flex flex-col">
           {/* Top half asks, bottom half answers. */}
           <div className="border-b border-[var(--border)] p-4">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]">
-              {habit.label}
-            </p>
-            <p className="mt-1.5 text-sm font-medium text-[var(--text)]">
+            {!cfg.hideLabel && (
+              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]">
+                {habit.label}
+              </p>
+            )}
+            <p className="text-sm font-medium text-[var(--text)]">
               {question?.text ?? 'Zatím tu není žádná otázka.'}
             </p>
           </div>
