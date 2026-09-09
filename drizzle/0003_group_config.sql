@@ -1,0 +1,1 @@
+ALTER TABLE "habit_groups" ADD COLUMN "config" jsonb DEFAULT '{}'::jsonb NOT NULL;

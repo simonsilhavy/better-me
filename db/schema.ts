@@ -21,6 +21,8 @@ export const habitGroups = pgTable('habit_groups', {
   key: text('key').notNull().unique(),
   label: text('label').notNull(),
   position: integer('position').notNull().default(0),
+  /** Per-group presentation, e.g. { emoji: '💪' } for the completion flourish. */
+  config: jsonb('config').notNull().default({}),
   archivedAt: timestamp('archived_at', { withTimezone: true }),
 });
 

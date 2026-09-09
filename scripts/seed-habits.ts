@@ -32,7 +32,7 @@ const CHECK = [
   { value: 'ne', label: '✗ Nesplněno', tone: 'bad' },
 ];
 
-const PLAN: { key: string; label: string; habits: SeedHabit[] }[] = [
+const PLAN: { key: string; label: string; config?: Record<string, unknown>; habits: SeedHabit[] }[] = [
   {
     key: 'energie',
     label: 'Energie',
@@ -44,6 +44,8 @@ const PLAN: { key: string; label: string; habits: SeedHabit[] }[] = [
   {
     key: 'cviceni',
     label: 'Cvičení',
+    // Fires the completion flourish; see the emoji rule in CLAUDE.md.
+    config: { emoji: '💪' },
     habits: [
       { key: 'kliky', label: 'Kliky', kind: 'counter', config: { min: 0, max: 250, step: 5 } },
       { key: 'drepy', label: 'Dřepy', kind: 'counter', config: { min: 0, max: 250, step: 5 } },
@@ -173,7 +175,7 @@ async function main() {
     } else {
       const [created] = await db
         .insert(habitGroups)
-        .values({ key: group.key, label: group.label, position: gi })
+        .values({ key: group.key, label: group.label, position: gi, config: group.config ?? {} })
         .returning({ id: habitGroups.id });
       groupId = created.id;
       groupsWritten++;

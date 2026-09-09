@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { saveDay } from '@/app/actions';
 import type { DayEntry, Habit, HabitGroup, HabitValue } from '@/lib/domain';
-import { defaultValue } from '@/lib/domain';
+import { defaultValue, hasActivity, summarize } from '@/lib/domain';
 import { addDays, formatCz, today, weekday } from '@/lib/date';
 import { HabitControl } from './HabitControl';
 import { GroupPanel } from './GroupPanel';
@@ -74,6 +74,12 @@ export function EntryForm({
   const [pending, startTransition] = useTransition();
   const restored = useRef(false);
 
+  /** Bumped on every edit so a finished save knows if it is still current. */
+  const revision = useRef(0);
+  const savedRevision = useRef(0);
+  const [dayDone, setDayDone] = useState(false);
+  const wasDayComplete = useRef(false);
+
   // Restore before the first edit, so a reload doesn't drop unsaved work.
   useEffect(() => {
     if (restored.current) return;
@@ -128,33 +134,92 @@ export function EntryForm({
     setAnswered(nextAnswered);
     setDirty(true);
     setStatus('idle');
+    revision.current += 1;
+  };
+
+  // Answered habits are sent as they stand. An untouched control is not a
+  // claim about the day, so it is left out — unless the day already held a
+  // value for it, in which case null goes out to clear what was recorded.
+  const buildPayload = (): Record<string, HabitValue> => {
+    const payload: Record<string, HabitValue> = {};
+    for (const h of habits) {
+      if (answered.has(h.key)) payload[h.key] = values[h.key];
+      else if (entry.values[h.key] !== undefined) payload[h.key] = null;
+    }
+    return payload;
+  };
+
+  const persist = async (rev: number, refresh: boolean) => {
+    const result = await saveDay(entry.date, buildPayload());
+    if (!result.ok) {
+      setStatus('error');
+      setMessage(result.error);
+      return;
+    }
+    savedRevision.current = rev;
+    // Anything typed while the save was in flight is still unsaved, so the
+    // bar must keep saying so rather than claiming a clean slate.
+    if (revision.current === rev) {
+      clearDraft(entry.date);
+      setDirty(false);
+    }
+    setStatus('saved');
+    setMessage('Uloženo');
+    if (refresh) router.refresh();
   };
 
   const onSave = () => {
-    startTransition(async () => {
-      // Answered habits are sent as they stand. An untouched control is not a
-      // claim about the day, so it is left out — unless the day already held a
-      // value for it, in which case null goes out to clear what was recorded.
-      const payload: Record<string, HabitValue> = {};
-      for (const h of habits) {
-        if (answered.has(h.key)) payload[h.key] = values[h.key];
-        else if (entry.values[h.key] !== undefined) payload[h.key] = null;
-      }
-      const result = await saveDay(entry.date, payload);
-      if (result.ok) {
-        clearDraft(entry.date);
-        setDirty(false);
-        setStatus('saved');
-        setMessage('Uloženo');
-        router.refresh();
-      } else {
-        setStatus('error');
-        setMessage(result.error);
-      }
-    });
+    const rev = revision.current;
+    startTransition(() => persist(rev, true));
   };
 
+  /**
+   * Autosave. Leaving the page mid-entry used to cost the day unless the draft
+   * in the browser caught it; now a pause of a second and a half is enough for
+   * the day to be on the server. The button stays — for the sense of a full
+   * stop, and as the way to retry after an error.
+   */
+  useEffect(() => {
+    if (!dirty || pending) return;
+    const rev = revision.current;
+    if (rev === savedRevision.current) return;
+
+    const t = setTimeout(() => {
+      startTransition(() => persist(rev, false));
+    }, 1500);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [values, answered, dirty, pending]);
+
   const filled = habits.filter((h) => answered.has(h.key)).length;
+  const dayComplete = habits.length > 0 && filled === habits.length;
+
+  // The day's single closing moment. It fires for having written the day down
+  // — never for how the day went — which is the rule the whole app rests on.
+  useEffect(() => {
+    if (!dayComplete) {
+      // No reset here on purpose: the banner runs out on its own timer, and
+      // clearing it from the effect body only causes an extra render pass.
+      wasDayComplete.current = false;
+      return;
+    }
+    if (wasDayComplete.current) return;
+    wasDayComplete.current = true;
+    setDayDone(true);
+    const t = setTimeout(() => setDayDone(false), 4200);
+    return () => clearTimeout(t);
+  }, [dayComplete]);
+
+  /** Whether a group saw any activity at all — gates its emoji, nothing else. */
+  const groupActive = (items: Habit[]) =>
+    items.some((h) => answered.has(h.key) && hasActivity(h, values[h.key]));
+
+  /** What a folded group leaves on screen, so nothing disappears out of sight. */
+  const groupSummary = (items: Habit[]) =>
+    items
+      .filter((h) => answered.has(h.key))
+      .map((h) => `${h.label} ${summarize(h, values[h.key])}`)
+      .join(' · ');
 
   const prev = addDays(entry.date, -1);
   const next = addDays(entry.date, 1);
@@ -180,6 +245,28 @@ export function EntryForm({
         <Link href={`/den/${next}`} aria-label="Další den" className="bm-seg rounded-xl px-3.5 py-2 text-sm">→</Link>
       </div>
 
+      {/* Progress as a line rather than a sentence: length reads without being
+          read, and it gives the form a visible end to walk towards. Sticky, so
+          it stays in the corner of the eye while scrolling. */}
+      {habits.length > 0 && (
+        <div
+          className="sticky top-0 z-20 -mx-4 h-[3px] bg-[var(--panel-2)]"
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={habits.length}
+          aria-valuenow={filled}
+          aria-label={`Vyplněno ${filled} z ${habits.length}`}
+        >
+          <div
+            className="h-full transition-[width,background-color] duration-300 ease-out"
+            style={{
+              width: `${(filled / habits.length) * 100}%`,
+              background: dayComplete ? 'var(--win)' : 'var(--accent)',
+            }}
+          />
+        </div>
+      )}
+
       {habits.length === 0 ? (
         <div className="bm-card flex flex-col items-center gap-3 p-8 text-center">
           <p className="text-sm text-[var(--muted)]">
@@ -202,6 +289,9 @@ export function EntryForm({
           label={group.label}
           filled={items.filter((h) => answered.has(h.key)).length}
           total={items.length}
+          emoji={group.config.emoji}
+          active={groupActive(items)}
+          summary={groupSummary(items)}
         >
           {items.map((habit) => (
             <HabitControl
@@ -222,6 +312,7 @@ export function EntryForm({
           label="Bez oddílu"
           filled={ungrouped.filter((h) => answered.has(h.key)).length}
           total={ungrouped.length}
+          summary={groupSummary(ungrouped)}
         >
           {ungrouped.map((habit) => (
             <HabitControl
@@ -235,6 +326,23 @@ export function EntryForm({
           ))}
         </GroupPanel>
       ) : null}
+
+      {dayDone && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-[4.5rem] z-30 px-4">
+          <div
+            className="bm-rise mx-auto flex max-w-xl items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-medium"
+            style={{
+              background: 'color-mix(in srgb, var(--win) 16%, var(--panel))',
+              border: '1px solid color-mix(in srgb, var(--win) 40%, var(--border))',
+              color: 'var(--win)',
+            }}
+            role="status"
+          >
+            <span aria-hidden="true">🎯</span>
+            <span>Dobrá práce. Máš to celé.</span>
+          </div>
+        </div>
+      )}
 
       <div className="fixed inset-x-0 bottom-0 border-t border-[var(--border)] bg-[var(--bg)]/95 backdrop-blur">
         <div className="mx-auto flex max-w-xl items-center gap-3 px-4 py-3">

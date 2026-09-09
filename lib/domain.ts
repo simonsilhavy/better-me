@@ -60,11 +60,18 @@ export type Habit = {
   archived: boolean;
 };
 
+/** Presentation settings a group carries; everything here is optional. */
+export type GroupConfig = {
+  /** Shown as a small flourish when the group is completed with any activity. */
+  emoji?: string;
+};
+
 export type HabitGroup = {
   id: number;
   key: string;
   label: string;
   position: number;
+  config: GroupConfig;
   archived: boolean;
 };
 
@@ -113,6 +120,7 @@ export function rowToGroup(row: HabitGroupRow): HabitGroup {
     key: row.key,
     label: row.label,
     position: row.position,
+    config: (row.config ?? {}) as GroupConfig,
     archived: row.archivedAt !== null,
   };
 }
@@ -262,4 +270,63 @@ export function emptyDay(date: string): DayEntry {
 export function valueFor(entry: DayEntry, habit: Habit): HabitValue {
   const v = entry.values[habit.key];
   return v === undefined ? defaultValue(habit) : v;
+}
+
+/**
+ * Did this value represent something actually happening?
+ *
+ * Used only to decide whether a group's completion flourish fires. The bar sits
+ * at "more than nothing" on purpose: it rewards having done something, never
+ * how much, and it sits low enough that clearing it honestly is cheaper than
+ * faking it. Anything that scales the reward with the number would turn it into
+ * a reward for performance -- see the rule in CLAUDE.md.
+ */
+export function hasActivity(habit: Habit, value: HabitValue): boolean {
+  switch (habit.kind) {
+    case 'scale':
+    case 'counter':
+    case 'duration':
+      return typeof value === 'number' && value > 0;
+    case 'boolean':
+      return value === true;
+    case 'choice': {
+      const option = (habit.config.options ?? []).find((o) => o.value === value);
+      return option?.tone === 'good';
+    }
+    default:
+      return false;
+  }
+}
+
+/**
+ * A value in as few characters as possible, for the one line a folded group
+ * leaves behind. Long enough to recognise what was entered, short enough that
+ * a whole group fits on a phone without wrapping.
+ */
+export function summarize(habit: Habit, value: HabitValue): string {
+  switch (habit.kind) {
+    case 'duration': {
+      const total = Math.round(typeof value === 'number' ? value : 0);
+      const h = Math.floor(total / 60);
+      const m = total % 60;
+      return h === 0 ? `${m} min` : m === 0 ? `${h} h` : `${h}.${String(m).padStart(2, '0')}`;
+    }
+    case 'scale':
+    case 'counter': {
+      const n = typeof value === 'number' ? value : 0;
+      return habit.config.unit ? `${n} ${habit.config.unit}` : String(n);
+    }
+    case 'boolean':
+      return value === true ? '✓' : '✗';
+    case 'choice': {
+      const option = (habit.config.options ?? []).find((o) => o.value === value);
+      if (!option) return '—';
+      // Option labels often lead with their own tick or cross; one is enough.
+      return option.label.replace(/^[✓✗]\s*/, '');
+    }
+    case 'text':
+      return typeof value === 'string' && value.trim() !== '' ? '✎' : '—';
+    case 'retro':
+      return isRetroValue(value) && value.a.trim() !== '' ? '✎' : '—';
+  }
 }

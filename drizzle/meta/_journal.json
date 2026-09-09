@@ -22,6 +22,13 @@
       "when": 1788970390803,
       "tag": "0002_value_meta",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788988197101,
+      "tag": "0003_group_config",
+      "breakpoints": true
     }
   ]
 }

@@ -2,6 +2,7 @@
 
 import type { Habit, HabitValue } from '@/lib/domain';
 import { questionFor, retroValue } from '@/lib/retro';
+import { AutoTextarea } from './AutoTextarea';
 import { Field } from './Field';
 import { Slider } from './Slider';
 import { Segmented } from './Segmented';
@@ -102,13 +103,11 @@ export function HabitControl({
 
     case 'text': {
       const box = (
-        <textarea
+        <AutoTextarea
           value={typeof value === 'string' ? value : ''}
-          onChange={(e) => onChange(e.target.value)}
-          rows={4}
+          onChange={onChange}
           maxLength={cfg.maxLength ?? 4000}
           placeholder={cfg.placeholder ?? ''}
-          className="w-full resize-y rounded-xl border border-[var(--border)] bg-[var(--panel-2)] p-3 text-sm text-[var(--text)] placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:outline-none"
         />
       );
 
@@ -137,13 +136,11 @@ export function HabitControl({
             </p>
           </div>
           <div className="p-4">
-            <textarea
+            <AutoTextarea
               value={current.a}
-              onChange={(e) => onChange({ q: question?.id ?? current.q, a: e.target.value })}
-              rows={4}
+              onChange={(a) => onChange({ q: question?.id ?? current.q, a })}
               maxLength={cfg.maxLength ?? 4000}
               placeholder="Napiš, co tě k tomu napadá…"
-              className="w-full resize-y rounded-xl border border-[var(--border)] bg-[var(--panel-2)] p-3 text-sm text-[var(--text)] placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:outline-none"
             />
           </div>
         </div>
