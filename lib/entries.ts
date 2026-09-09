@@ -10,7 +10,6 @@ import {
   columnsToValue,
   defaultValue,
   emptyDay,
-  isRecorded,
   rowToGroup,
   rowToHabit,
   valueToColumns,
@@ -192,9 +191,16 @@ export async function getEarliestDate(): Promise<string | null> {
 export type SaveOutcome = { saved: string[]; ignored: string[] };
 
 /**
- * Writes a day. Keys that match no habit are reported back rather than dropped
- * in silence, so a typo in an API call is visible instead of looking like a
- * successful write that quietly did nothing.
+ * Writes a day.
+ *
+ * Every key present is stored, even when its value equals the habit's default:
+ * deliberately answering "Žádné" is an answer, and dropping it because it looks
+ * like an untouched control lost the distinction between "I didn't stretch" and
+ * "I didn't say". `null` is the way to clear one.
+ *
+ * Keys that match no habit are reported back rather than dropped in silence, so
+ * a typo in an API call is visible instead of looking like a successful write
+ * that quietly did nothing.
  */
 export async function upsertDay(
   date: string,
@@ -214,14 +220,18 @@ export async function upsertDay(
       continue;
     }
 
-    const value = coerceValue(habit, raw);
     saved.push(key);
 
-    if (isRecorded(habit, value)) {
-      toWrite.push({ habitId: habit.id, ...valueToColumns(habit, value) });
-    } else {
-      // Back to the default: drop the row so "filled in" stays meaningful.
+    if (raw === null) {
       toClear.push(habit.id);
+      continue;
+    }
+
+    const value = coerceValue(habit, raw);
+    if (value === null) {
+      toClear.push(habit.id);
+    } else {
+      toWrite.push({ habitId: habit.id, ...valueToColumns(habit, value) });
     }
   }
 

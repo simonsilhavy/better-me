@@ -1,5 +1,5 @@
 import type { DayEntry, Habit, HabitValue } from './domain';
-import { defaultValue, isRecorded } from './domain';
+
 import { addDays, daysBetween } from './date';
 
 export type Metric = 'sum' | 'avg' | 'days';
@@ -44,7 +44,7 @@ function aggregate(habit: Habit, days: DayEntry[], metric: Metric): { value: num
 
   for (const day of days) {
     const raw = day.values[habit.key];
-    if (raw === undefined || !isRecorded(habit, raw)) continue;
+    if (raw === undefined) continue;
     recorded++;
     const n = numeric(habit, raw);
     if (n !== null) sum += n;
@@ -78,7 +78,7 @@ export function periodStats(
 
     const spark = dates.map((d) => {
       const raw = byDate.get(d)?.values[habit.key];
-      if (raw === undefined || !isRecorded(habit, raw)) return 0;
+      if (raw === undefined) return 0;
       const n = numeric(habit, raw);
       return n ?? 1;
     });
@@ -119,8 +119,5 @@ export function formatValue(stats: HabitPeriodStats): string {
 /** Whether a day counts as logged at all, for the calendar and completeness. */
 export function dayIsLogged(day: DayEntry | undefined, habits: Habit[]): boolean {
   if (!day) return false;
-  return habits.some((h) => {
-    const v = day.values[h.key];
-    return v !== undefined && isRecorded(h, v) && v !== defaultValue(h);
-  });
+  return habits.some((h) => day.values[h.key] !== undefined);
 }

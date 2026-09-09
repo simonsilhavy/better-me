@@ -20,17 +20,20 @@ export function Segmented<T extends string | number | null>({
   value,
   onChange,
   clearable = false,
+  toned = true,
 }: {
   options: SegmentedOption<T>[];
   value: T;
   onChange: (next: T) => void;
   clearable?: boolean;
+  /** False keeps the neutral accent, for a choice nobody has answered yet. */
+  toned?: boolean;
 }) {
   return (
     <div className="flex gap-2">
       {options.map((opt) => {
         const active = opt.value === value;
-        const color = opt.tone ? TONE_COLOR[opt.tone] : undefined;
+        const color = toned && opt.tone ? TONE_COLOR[opt.tone] : undefined;
         return (
           <button
             key={String(opt.value)}

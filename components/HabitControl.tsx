@@ -19,10 +19,17 @@ export function HabitControl({
   habit,
   value,
   onChange,
+  answered = true,
 }: {
   habit: Habit;
   value: HabitValue;
   onChange: (next: HabitValue) => void;
+  /**
+   * Whether this habit holds an answer rather than its default. Colour means
+   * "this is how the day went", so an untouched control stays neutral — a
+   * screen of red every morning would be reporting nothing.
+   */
+  answered?: boolean;
 }) {
   const cfg = habit.config;
 
@@ -68,6 +75,7 @@ export function HabitControl({
         <Field label={habit.label} hint={cfg.hint}>
           <Segmented<string | null>
             value={current}
+            toned={answered}
             clearable={cfg.clearable === true}
             onChange={(next) => onChange(next)}
             options={(cfg.options ?? []).map((o) => ({

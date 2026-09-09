@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { saveDay } from '@/app/actions';
 import type { DayEntry, Habit, HabitGroup, HabitValue } from '@/lib/domain';
-import { defaultValue, isRecorded } from '@/lib/domain';
+import { defaultValue } from '@/lib/domain';
 import { addDays, formatCz, today, weekday } from '@/lib/date';
 import { HabitControl } from './HabitControl';
 import { GroupPanel } from './GroupPanel';
@@ -17,18 +17,23 @@ import { GroupPanel } from './GroupPanel';
  */
 const draftKey = (date: string) => `bm-draft-${date}`;
 
-function readDraft(date: string): Record<string, HabitValue> | null {
+type Draft = { values: Record<string, HabitValue>; answered: string[] };
+
+function readDraft(date: string): Draft | null {
   try {
     const raw = localStorage.getItem(draftKey(date));
-    return raw ? (JSON.parse(raw) as Record<string, HabitValue>) : null;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<Draft>;
+    if (!parsed || typeof parsed.values !== 'object' || parsed.values === null) return null;
+    return { values: parsed.values, answered: parsed.answered ?? [] };
   } catch {
     return null;
   }
 }
 
-function writeDraft(date: string, values: Record<string, HabitValue>): void {
+function writeDraft(date: string, draft: Draft): void {
   try {
-    localStorage.setItem(draftKey(date), JSON.stringify(values));
+    localStorage.setItem(draftKey(date), JSON.stringify(draft));
   } catch {
     // Private mode, or storage full — the form still works, just without a net.
   }
@@ -59,6 +64,10 @@ export function EntryForm({
   }
 
   const [values, setValues] = useState(initial);
+  // Seeded from what was actually recorded, then grown as you touch things.
+  const [answered, setAnswered] = useState<Set<string>>(
+    () => new Set(Object.keys(entry.values)),
+  );
   const [dirty, setDirty] = useState(false);
   const [status, setStatus] = useState<'idle' | 'saved' | 'error'>('idle');
   const [message, setMessage] = useState('');
@@ -77,30 +86,49 @@ export function EntryForm({
     // removed must not resurrect it.
     const merged: Record<string, HabitValue> = {};
     for (const h of habits) {
-      merged[h.key] = draft[h.key] ?? entry.values[h.key] ?? defaultValue(h);
+      merged[h.key] = draft.values[h.key] ?? entry.values[h.key] ?? defaultValue(h);
     }
 
-    if (JSON.stringify(merged) !== JSON.stringify(initial)) {
+    const draftAnswered = draft.answered.filter((k) => habits.some((h) => h.key === k));
+
+    // A draft can differ from the saved day only in *what was answered* — an
+    // answer of "Žádné" looks exactly like the untouched default. Comparing
+    // values alone silently threw those away.
+    const valuesDiffer = JSON.stringify(merged) !== JSON.stringify(initial);
+    const answersDiffer = draftAnswered.some((k) => entry.values[k] === undefined);
+
+    if (valuesDiffer || answersDiffer) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setValues(merged);
+       
+      setAnswered(new Set([...Object.keys(entry.values), ...draftAnswered]));
       setDirty(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entry.date]);
 
   const set = (key: string, value: HabitValue) => {
+    const nextAnswered = answered.has(key) ? answered : new Set(answered).add(key);
     setValues((prev) => {
       const next = { ...prev, [key]: value };
-      writeDraft(entry.date, next);
+      // The draft carries which habits were answered, not just their values:
+      // an answer that happens to equal the default is still an answer.
+      writeDraft(entry.date, { values: next, answered: [...nextAnswered] });
       return next;
     });
+    setAnswered(nextAnswered);
     setDirty(true);
     setStatus('idle');
   };
 
   const onSave = () => {
     startTransition(async () => {
-      const result = await saveDay(entry.date, values);
+      // Only answered habits are sent. An untouched control is not a claim
+      // about the day, and sending its default would record one.
+      const payload = Object.fromEntries(
+        habits.filter((h) => answered.has(h.key)).map((h) => [h.key, values[h.key]]),
+      );
+      const result = await saveDay(entry.date, payload);
       if (result.ok) {
         clearDraft(entry.date);
         setDirty(false);
@@ -114,7 +142,7 @@ export function EntryForm({
     });
   };
 
-  const filled = habits.filter((h) => isRecorded(h, values[h.key])).length;
+  const filled = habits.filter((h) => answered.has(h.key)).length;
 
   const prev = addDays(entry.date, -1);
   const next = addDays(entry.date, 1);
@@ -160,7 +188,7 @@ export function EntryForm({
           key={group.id}
           id={group.id}
           label={group.label}
-          filled={items.filter((h) => isRecorded(h, values[h.key])).length}
+          filled={items.filter((h) => answered.has(h.key)).length}
           total={items.length}
         >
           {items.map((habit) => (
@@ -168,6 +196,7 @@ export function EntryForm({
               key={habit.id}
               habit={habit}
               value={values[habit.key]}
+              answered={answered.has(habit.key)}
               onChange={(v) => set(habit.key, v)}
             />
           ))}
@@ -178,7 +207,7 @@ export function EntryForm({
         <GroupPanel
           id="none"
           label="Bez oddílu"
-          filled={ungrouped.filter((h) => isRecorded(h, values[h.key])).length}
+          filled={ungrouped.filter((h) => answered.has(h.key)).length}
           total={ungrouped.length}
         >
           {ungrouped.map((habit) => (
@@ -186,6 +215,7 @@ export function EntryForm({
               key={habit.id}
               habit={habit}
               value={values[habit.key]}
+              answered={answered.has(habit.key)}
               onChange={(v) => set(habit.key, v)}
             />
           ))}
