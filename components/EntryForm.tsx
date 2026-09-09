@@ -128,7 +128,7 @@ export function EntryForm({
   return (
     <div className="flex flex-col gap-4 pb-28">
       <div className="bm-card flex items-center justify-between gap-2 p-3">
-        <Link href={`/day/${prev}`} aria-label="Předchozí den" className="bm-seg rounded-xl px-3.5 py-2 text-sm">←</Link>
+        <Link href={`/den/${prev}`} aria-label="Předchozí den" className="bm-seg rounded-xl px-3.5 py-2 text-sm">←</Link>
         <div className="text-center">
           <div className="text-base font-semibold">
             {weekday(entry.date)} {formatCz(entry.date)}
@@ -137,7 +137,7 @@ export function EntryForm({
             {isToday ? 'dnes' : entry.date} · {filled} z {habits.length} vyplněno
           </div>
         </div>
-        <Link href={`/day/${next}`} aria-label="Další den" className="bm-seg rounded-xl px-3.5 py-2 text-sm">→</Link>
+        <Link href={`/den/${next}`} aria-label="Další den" className="bm-seg rounded-xl px-3.5 py-2 text-sm">→</Link>
       </div>
 
       {habits.length === 0 ? (

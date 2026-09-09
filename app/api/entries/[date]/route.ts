@@ -51,8 +51,8 @@ export async function PUT(request: Request, { params }: Params) {
   try {
     const { ignored } = await upsertDay(date, body as Record<string, unknown>);
     revalidatePath('/');
-    revalidatePath('/history');
-    revalidatePath(`/day/${date}`);
+    revalidatePath('/historie');
+    revalidatePath(`/den/${date}`);
 
     const day = await getDay(date);
     // Unknown keys are named rather than dropped in silence, so a typo in a

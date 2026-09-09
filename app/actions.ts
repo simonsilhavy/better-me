@@ -27,8 +27,8 @@ export async function saveDay(
   }
 
   revalidatePath('/');
-  revalidatePath('/history');
-  revalidatePath(`/day/${date}`);
+  revalidatePath('/historie');
+  revalidatePath(`/den/${date}`);
 
   return { ok: true, savedAt: new Date().toISOString(), ignored };
 }

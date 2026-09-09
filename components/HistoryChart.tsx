@@ -16,9 +16,11 @@ export type ChartPoint = { date: string } & Record<string, number | string>;
 export function HistoryChart({
   data,
   habits,
+  title = 'Průběh',
 }: {
   data: ChartPoint[];
   habits: Habit[];
+  title?: string;
 }) {
   const numeric = habits.filter((h) =>
     ['scale', 'counter', 'duration'].includes(h.kind),
@@ -42,9 +44,9 @@ export function HistoryChart({
   return (
     <div className="bm-card p-4">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold">Posledních 14 dní</h2>
+        <h2 className="text-sm font-semibold">{title}</h2>
         <div className="flex flex-wrap gap-1.5">
-          {numeric.map((h) => (
+          {numeric.length > 1 ? numeric.map((h) => (
             <button
               key={h.key}
               type="button"
@@ -54,7 +56,7 @@ export function HistoryChart({
             >
               {h.label}
             </button>
-          ))}
+          )) : null}
         </div>
       </div>
 

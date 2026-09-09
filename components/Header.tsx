@@ -17,7 +17,7 @@ export function Header() {
         <Link href="/" className="bm-seg rounded-lg px-3 py-1.5">
           Dnes
         </Link>
-        <Link href="/history" className="bm-seg rounded-lg px-3 py-1.5">
+        <Link href="/historie" className="bm-seg rounded-lg px-3 py-1.5">
           Historie
         </Link>
         <Link href="/nastaveni" className="bm-seg rounded-lg px-3 py-1.5">

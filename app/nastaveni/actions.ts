@@ -13,7 +13,7 @@ export type ActionResult = { ok: true } | { ok: false; error: string };
 function refresh() {
   revalidatePath('/nastaveni');
   revalidatePath('/');
-  revalidatePath('/history');
+  revalidatePath('/historie');
 }
 
 async function run(fn: () => Promise<void>): Promise<ActionResult> {

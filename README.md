@@ -16,8 +16,9 @@ Replaces the single-file `better-me.html` artifact whose data lived hardcoded in
 | Route | What |
 | --- | --- |
 | `/` | Today's entry (date resolved in `Europe/Prague`, not server UTC) |
-| `/day/[date]` | Any specific day, deep-linkable; prev/next arrows kept |
-| `/history` | Win/loss + streak stats, 14-day bar chart, full clickable history |
+| `/den/[date]` | Any specific day, deep-linkable; prev/next arrows kept |
+| `/historie` | Period picker, verdict stats, calendar heatmap, per-habit trend cards |
+| `/historie/[key]` | One habit: chart, period figures, the days it was recorded |
 | `/nastaveni` | Groups and habits: create, rename, reorder, move, archive, delete |
 | `/login` | PIN gate, when one is configured |
 
@@ -157,6 +158,18 @@ delete — never as a side effect.
 streaks, `note` shows in history lists). Both are ordinary, removable habits;
 when the verdict habit is gone the history screen drops those tiles rather than
 rendering zeros.
+
+## History figures
+
+Counters and durations are summed over a period; a percentage is averaged over
+the days it was recorded; choices and switches have no scale, so what is counted
+there is how many days they were recorded at all. Each period is compared with
+the window of equal length immediately before it, which is what keeps the change
+percentage meaningful when you switch from 7 days to 90.
+
+Group-level totals are deliberately absent. A habit moved between groups would
+make the same past month total differently, because groups are read as they are
+now, not as they were then — so every figure in Historie belongs to one habit.
 
 ## Migrations
 

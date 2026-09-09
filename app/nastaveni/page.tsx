@@ -22,6 +22,10 @@ export default async function SettingsPage() {
         </p>
       </div>
 
+      {/* Adding comes first: it is what you open this screen to do. */}
+      <GroupCreator />
+      <HabitCreator groups={groups} />
+
       {groups.map((group) => (
         <GroupSection
           key={group.id}
@@ -34,9 +38,6 @@ export default async function SettingsPage() {
       {active.some((h) => h.groupId === null) ? (
         <GroupSection group={null} groups={groups} habits={active.filter((h) => h.groupId === null)} />
       ) : null}
-
-      <GroupCreator />
-      <HabitCreator groups={groups} />
 
       {archived.length > 0 ? (
         <section className="flex flex-col gap-2">
