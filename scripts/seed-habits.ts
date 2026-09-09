@@ -13,6 +13,7 @@ import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
 import { eq } from 'drizzle-orm';
 import { habitGroups, habits } from '../db/schema';
+import { RETRO_QUESTIONS } from '../lib/retro-questions';
 
 const url = process.env.DATABASE_URL ?? process.env.POSTGRES_URL;
 if (!url) throw new Error('DATABASE_URL is not set');
@@ -29,21 +30,6 @@ type SeedHabit = {
 const CHECK = [
   { value: 'ano', label: '✓ Splněno', tone: 'good' },
   { value: 'ne', label: '✗ Nesplněno', tone: 'bad' },
-];
-
-const RETRO_QUESTIONS = [
-  { id: 'energie', text: 'Co dneska stálo nejvíc energie — a stálo to za to?' },
-  { id: 'nechtelo', text: 'Kdy jsi udělal něco, co se ti nechtělo?' },
-  { id: 'odlozil', text: 'Co jsi odložil a proč zrovna to?' },
-  { id: 'pochvala', text: 'Za co bys sám sebe dneska pochválil?' },
-  { id: 'jinak', text: 'Co bys udělal jinak, kdyby byl dnešek znovu?' },
-  { id: 'slo-samo', text: 'Kdy ti to dneska šlo samo?' },
-  { id: 'rozhodilo', text: 'Co tě rozhodilo a jak dlouho trvalo se vrátit?' },
-  { id: 'o-sobe', text: 'Co ses dneska dozvěděl o sobě?' },
-  { id: 'unava-hlava', text: 'Bránila ti víc únava, nebo hlava?' },
-  { id: 'zitrek', text: 'Kdyby měl být zítřek lepší o jednu jedinou věc, jaká?' },
-  { id: 'rekl-ne', text: 'Na co jsi dneska řekl ne?' },
-  { id: 'za-tyden', text: 'Co z dneška bude mít smysl ještě za týden?' },
 ];
 
 const PLAN: { key: string; label: string; habits: SeedHabit[] }[] = [
