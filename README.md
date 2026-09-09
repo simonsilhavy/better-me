@@ -59,10 +59,15 @@ restore session cookies when they reopen ("continue where you left off"), so
 closing the browser did not actually end the session — the cookie came back
 intact and still verified.
 
-A session lasts 45 seconds without a heartbeat; an open page beats every 15 s.
-Close the tab or the browser and the session lapses within that window, so
-coming back means entering the PIN again. **The window is the honest limit:
-reopening within ~45 seconds still gets you in.**
+A session lasts 3 minutes without a heartbeat; an open page beats every minute
+and beats again the moment it becomes visible. Close the tab or the browser and
+the session lapses within that window, so coming back means entering the PIN
+again. **The window is the honest limit: reopening within ~3 minutes still gets
+you in.**
+
+It cannot be much shorter. Browsers throttle and eventually freeze timers in
+background tabs, so a window of seconds ended sessions while the app was merely
+behind another app for a moment.
 
 An earlier version also sent a `pagehide` beacon so a close ended the session
 instantly. It was removed: `pagehide` fires on ordinary same-tab navigation too,

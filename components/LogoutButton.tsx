@@ -17,7 +17,7 @@ export function LogoutButton() {
       title="Odhlásit"
       disabled={pending}
       onClick={() => startTransition(async () => { await logout(); })}
-      className="bm-seg bm-press cursor-pointer rounded-lg px-3 py-1.5 disabled:cursor-default"
+      className="bm-seg bm-danger bm-press cursor-pointer rounded-lg px-3 py-1.5 disabled:cursor-default"
       style={pending ? { background: 'var(--loss)', borderColor: 'var(--loss)', color: '#0e0f13' } : undefined}
     >
       {pending ? '…' : '⏻'}

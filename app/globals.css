@@ -121,6 +121,21 @@ body {
   color: var(--text);
 }
 
+/* Navigation picks up the accent from the logo on hover; logging out warns in
+   the colour it deserves. Guarded so a touch screen, where "hover" sticks after
+   a tap, is left alone. */
+@media (hover: hover) {
+  .bm-nav:hover:not(:disabled) {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .bm-danger:hover:not(:disabled) {
+    color: var(--loss);
+    border-color: var(--loss);
+  }
+}
+
 /* Every tap gets an immediate answer, before any round trip resolves. */
 .bm-seg:active:not(:disabled),
 .bm-press:active:not(:disabled) {

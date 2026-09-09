@@ -14,13 +14,13 @@ export function Header() {
         Better<span style={{ color: 'var(--accent)' }}>Me</span>
       </Link>
       <nav className="flex gap-2 text-sm">
-        <Link href="/" className="bm-seg rounded-lg px-3 py-1.5">
+        <Link href="/" className="bm-seg bm-nav bm-press rounded-lg px-3 py-1.5">
           Dnes
         </Link>
-        <Link href="/historie" className="bm-seg rounded-lg px-3 py-1.5">
+        <Link href="/historie" className="bm-seg bm-nav bm-press rounded-lg px-3 py-1.5">
           Historie
         </Link>
-        <Link href="/nastaveni" className="bm-seg rounded-lg px-3 py-1.5">
+        <Link href="/nastaveni" className="bm-seg bm-nav bm-press rounded-lg px-3 py-1.5">
           Úpravy
         </Link>
         <LogoutButton />
