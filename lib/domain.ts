@@ -143,6 +143,18 @@ export function defaultValue(habit: Habit): HabitValue {
  * unknown choices fall back to the default. A malformed payload can shorten a
  * day's record but can never write nonsense into it.
  */
+/**
+ * Snapping to a fractional step leaves binary-float debris -- 3 * 0.1 is
+ * 0.30000000000000004 -- which would otherwise be stored and shown verbatim.
+ * Rounding to the step's own precision keeps 2.9 km reading as 2.9 km.
+ */
+function roundToStep(value: number, step: number): number {
+  const s = String(step);
+  const dot = s.indexOf('.');
+  const decimals = dot === -1 || s.includes('e') ? 0 : s.length - dot - 1;
+  return decimals === 0 ? value : Number(value.toFixed(decimals));
+}
+
 export function coerceValue(habit: Habit, raw: unknown): HabitValue {
   const cfg = habit.config;
 
@@ -156,7 +168,7 @@ export function coerceValue(habit: Habit, raw: unknown): HabitValue {
       const n = Number(raw);
       if (!Number.isFinite(n)) return min;
       const snapped = Math.round((n - min) / step) * step + min;
-      return Math.min(max, Math.max(min, snapped));
+      return roundToStep(Math.min(max, Math.max(min, snapped)), step);
     }
 
     case 'boolean':

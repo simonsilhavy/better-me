@@ -57,7 +57,7 @@ const NEW_HABITS = [
     key: 'beh',
     label: 'Uběhnuto',
     kind: 'counter',
-    config: { min: 0, max: 30, step: 0.5, unit: 'km' },
+    config: { min: 0, max: 30, step: 0.1, unit: 'km' },
   },
   {
     key: 'proteinOdpo',

@@ -47,7 +47,7 @@ const PLAN: { key: string; label: string; habits: SeedHabit[] }[] = [
     habits: [
       { key: 'kliky', label: 'Kliky', kind: 'counter', config: { min: 0, max: 250, step: 5 } },
       { key: 'drepy', label: 'Dřepy', kind: 'counter', config: { min: 0, max: 250, step: 5 } },
-      { key: 'beh', label: 'Uběhnuto', kind: 'counter', config: { min: 0, max: 30, step: 0.5, unit: 'km' } },
+      { key: 'beh', label: 'Uběhnuto', kind: 'counter', config: { min: 0, max: 30, step: 0.1, unit: 'km' } },
     ],
   },
   {
