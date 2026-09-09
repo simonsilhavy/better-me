@@ -20,6 +20,9 @@ export function Header() {
         <Link href="/historie" className="bm-seg bm-nav bm-press rounded-lg px-3 py-1.5">
           Historie
         </Link>
+        <Link href="/denik" className="bm-seg bm-nav bm-press rounded-lg px-3 py-1.5">
+          Deník
+        </Link>
         <Link href="/nastaveni" className="bm-seg bm-nav bm-press rounded-lg px-3 py-1.5">
           Úpravy
         </Link>
