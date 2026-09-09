@@ -8,6 +8,7 @@ import type { DayEntry, Habit, HabitGroup, HabitValue } from '@/lib/domain';
 import { defaultValue, isRecorded } from '@/lib/domain';
 import { addDays, formatCz, today, weekday } from '@/lib/date';
 import { HabitControl } from './HabitControl';
+import { GroupPanel } from './GroupPanel';
 
 /**
  * A half-written day survives a reload or an idle logout. Sessions are short by
@@ -140,18 +141,28 @@ export function EntryForm({
       </div>
 
       {habits.length === 0 ? (
-        <div className="bm-card p-8 text-center">
+        <div className="bm-card flex flex-col items-center gap-3 p-8 text-center">
           <p className="text-sm text-[var(--muted)]">
-            Zatím nemáš žádné habity.
+            Zatím nemáš žádné habity, takže není co zapisovat.
           </p>
+          <Link
+            href="/nastaveni"
+            className="rounded-xl px-4 py-2 text-sm font-semibold text-[#0e0f13]"
+            style={{ background: 'var(--accent)' }}
+          >
+            Přidat první habit
+          </Link>
         </div>
       ) : null}
 
       {byGroup.map(({ group, items }) => (
-        <section key={group.id} className="flex flex-col gap-3">
-          <h2 className="px-1 pt-2 text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
-            {group.label}
-          </h2>
+        <GroupPanel
+          key={group.id}
+          id={group.id}
+          label={group.label}
+          filled={items.filter((h) => isRecorded(h, values[h.key])).length}
+          total={items.length}
+        >
           {items.map((habit) => (
             <HabitControl
               key={habit.id}
@@ -160,14 +171,16 @@ export function EntryForm({
               onChange={(v) => set(habit.key, v)}
             />
           ))}
-        </section>
+        </GroupPanel>
       ))}
 
       {ungrouped.length > 0 ? (
-        <section className="flex flex-col gap-3">
-          <h2 className="px-1 pt-2 text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
-            Bez oddílu
-          </h2>
+        <GroupPanel
+          id="none"
+          label="Bez oddílu"
+          filled={ungrouped.filter((h) => isRecorded(h, values[h.key])).length}
+          total={ungrouped.length}
+        >
           {ungrouped.map((habit) => (
             <HabitControl
               key={habit.id}
@@ -176,7 +189,7 @@ export function EntryForm({
               onChange={(v) => set(habit.key, v)}
             />
           ))}
-        </section>
+        </GroupPanel>
       ) : null}
 
       <div className="fixed inset-x-0 bottom-0 border-t border-[var(--border)] bg-[var(--bg)]/95 backdrop-blur">

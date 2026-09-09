@@ -90,15 +90,23 @@ export function HabitRow({ habit, groups }: { habit: Habit; groups: HabitGroup[]
       </div>
 
       <div className="flex items-center gap-2 pl-8">
-        <select
-          value={habit.groupId ?? ''}
-          disabled={pending}
-          onChange={(e) => act(() => reassignHabit(habit.id, e.target.value === '' ? null : Number(e.target.value)))}
-          className="min-w-0 flex-1 rounded-lg border border-[var(--border)] bg-[var(--panel-2)] px-2 py-1 text-xs text-[var(--text)]"
-        >
-          {groups.map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
-          <option value="">Bez oddílu</option>
-        </select>
+        {/* The dropdown alone read as a mystery control, so it says what it
+            changes — and that changing it is safe. */}
+        <label className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span className="text-[10px] uppercase tracking-wider text-[var(--muted)]">
+            Oddíl — přesun nezmění data
+          </span>
+          <select
+            value={habit.groupId ?? ''}
+            disabled={pending}
+            aria-label={`Oddíl habitu ${habit.label}`}
+            onChange={(e) => act(() => reassignHabit(habit.id, e.target.value === '' ? null : Number(e.target.value)))}
+            className="w-full rounded-lg border border-[var(--border)] bg-[var(--panel-2)] px-2 py-1 text-xs text-[var(--text)]"
+          >
+            {groups.map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
+            <option value="">Bez oddílu</option>
+          </select>
+        </label>
         <button type="button" disabled={pending} onClick={confirmDelete}
           className="bm-seg cursor-pointer rounded-lg px-2.5 py-1 text-xs" style={{ color: 'var(--loss)' }}>
           Smazat
