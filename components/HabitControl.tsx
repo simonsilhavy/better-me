@@ -1,6 +1,7 @@
 'use client';
 
 import type { Habit, HabitValue } from '@/lib/domain';
+import { questionFor, retroValue } from '@/lib/retro';
 import { Field } from './Field';
 import { Slider } from './Slider';
 import { Segmented } from './Segmented';
@@ -18,11 +19,14 @@ function formatMinutes(min: number): string {
 export function HabitControl({
   habit,
   value,
+  date,
   onChange,
   answered = true,
 }: {
   habit: Habit;
   value: HabitValue;
+  /** Which day is being written — the retrospective question follows it. */
+  date: string;
   onChange: (next: HabitValue) => void;
   /**
    * Whether this habit holds an answer rather than its default. Colour means
@@ -96,18 +100,52 @@ export function HabitControl({
       );
     }
 
-    case 'text':
-      return (
-        <Field label={habit.label} hint={cfg.hint}>
-          <textarea
-            value={typeof value === 'string' ? value : ''}
-            onChange={(e) => onChange(e.target.value)}
-            rows={4}
-            maxLength={cfg.maxLength ?? 4000}
-            placeholder={cfg.placeholder ?? ''}
-            className="w-full resize-y rounded-xl border border-[var(--border)] bg-[var(--panel-2)] p-3 text-sm text-[var(--text)] placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:outline-none"
-          />
-        </Field>
+    case 'text': {
+      const box = (
+        <textarea
+          value={typeof value === 'string' ? value : ''}
+          onChange={(e) => onChange(e.target.value)}
+          rows={4}
+          maxLength={cfg.maxLength ?? 4000}
+          placeholder={cfg.placeholder ?? ''}
+          className="w-full resize-y rounded-xl border border-[var(--border)] bg-[var(--panel-2)] p-3 text-sm text-[var(--text)] placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:outline-none"
+        />
       );
+
+      // The prompt inside the box already says what to write; a label above it
+      // would only repeat itself.
+      return cfg.hideLabel ? <div className="bm-card p-4">{box}</div> : (
+        <Field label={habit.label} hint={cfg.hint}>{box}</Field>
+      );
+    }
+
+    case 'retro': {
+      const current = retroValue(value);
+      const question = questionFor(habit, date, current);
+
+      return (
+        <div className="bm-card flex flex-col">
+          {/* Top half asks, bottom half answers. */}
+          <div className="border-b border-[var(--border)] p-4">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]">
+              {habit.label}
+            </p>
+            <p className="mt-1.5 text-sm font-medium text-[var(--text)]">
+              {question?.text ?? 'Zatím tu není žádná otázka.'}
+            </p>
+          </div>
+          <div className="p-4">
+            <textarea
+              value={current.a}
+              onChange={(e) => onChange({ q: question?.id ?? current.q, a: e.target.value })}
+              rows={4}
+              maxLength={cfg.maxLength ?? 4000}
+              placeholder="Napiš, co tě k tomu napadá…"
+              className="w-full resize-y rounded-xl border border-[var(--border)] bg-[var(--panel-2)] p-3 text-sm text-[var(--text)] placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:outline-none"
+            />
+          </div>
+        </div>
+      );
+    }
   }
 }

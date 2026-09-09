@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { Habit, HabitConfig, HabitGroup, HabitKind, HabitValue } from '@/lib/domain';
 import { defaultValue } from '@/lib/domain';
 import { HabitControl } from '@/components/HabitControl';
+import { today } from '@/lib/date';
 import { addHabit } from './actions';
 
 /**
@@ -151,7 +152,7 @@ export function HabitCreator({ groups }: { groups: HabitGroup[] }) {
       {/* You tap the real control before committing to it. */}
       <div className="flex flex-col gap-2">
         <span className="text-xs text-[var(--muted)]">Náhled — takhle to budeš vyplňovat</span>
-        <HabitControl habit={preview} value={previewValue} onChange={setPreviewValue} />
+        <HabitControl habit={preview} value={previewValue} date={today()} onChange={setPreviewValue} />
       </div>
 
       {error ? <p className="text-sm" style={{ color: 'var(--loss)' }} role="alert">{error}</p> : null}

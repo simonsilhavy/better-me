@@ -7,6 +7,7 @@ export const HABIT_KINDS = [
   'choice',
   'boolean',
   'text',
+  'retro',
 ] as const;
 
 export type HabitKind = (typeof HABIT_KINDS)[number];
@@ -21,6 +22,16 @@ export type ChoiceTone = 'good' | 'partial' | 'bad';
 
 export type ChoiceOption = { value: string; label: string; tone?: ChoiceTone };
 
+/** One prompt in a retrospective habit's set. Ids are stable; text can change. */
+export type RetroQuestion = { id: string; text: string };
+
+/**
+ * A retrospective answer travels with the question it answers. Deriving the
+ * question from the date instead would look identical today and silently
+ * reassign every old answer the first time the set grows.
+ */
+export type RetroValue = { q: string; a: string };
+
 export type HabitConfig = {
   min?: number;
   max?: number;
@@ -32,6 +43,9 @@ export type HabitConfig = {
   maxLength?: number;
   placeholder?: string;
   hint?: string;
+  /** The placeholder carries the prompt, so a label would only repeat it. */
+  hideLabel?: boolean;
+  questions?: RetroQuestion[];
 };
 
 export type Habit = {
@@ -55,7 +69,11 @@ export type HabitGroup = {
 };
 
 /** What a single habit holds on a single day. */
-export type HabitValue = number | string | boolean | null;
+export type HabitValue = number | string | boolean | RetroValue | null;
+
+export function isRetroValue(v: HabitValue): v is RetroValue {
+  return typeof v === 'object' && v !== null && 'a' in v;
+}
 
 export type DayEntry = {
   date: string;
@@ -69,6 +87,7 @@ export type ValueColumns = {
   num: number | null;
   txt: string | null;
   flag: boolean | null;
+  meta?: unknown;
 };
 
 const isKind = (v: unknown): v is HabitKind =>
@@ -113,6 +132,8 @@ export function defaultValue(habit: Habit): HabitValue {
         : (habit.config.options?.[0]?.value ?? null);
     case 'text':
       return '';
+    case 'retro':
+      return { q: '', a: '' };
   }
 }
 
@@ -155,6 +176,18 @@ export function coerceValue(habit: Habit, raw: unknown): HabitValue {
       if (typeof raw !== 'string') return '';
       return raw.slice(0, cfg.maxLength ?? 4000);
     }
+
+    case 'retro': {
+      // A bare string is accepted as the answer alone, so the chat relay can
+      // write one without knowing which question was drawn.
+      if (typeof raw === 'string') return { q: '', a: raw.slice(0, cfg.maxLength ?? 4000) };
+      if (!isRetroValue(raw as HabitValue)) return { q: '', a: '' };
+      const v = raw as RetroValue;
+      return {
+        q: typeof v.q === 'string' ? v.q.slice(0, 64) : '',
+        a: typeof v.a === 'string' ? v.a.slice(0, cfg.maxLength ?? 4000) : '',
+      };
+    }
   }
 }
 
@@ -172,6 +205,10 @@ export function valueToColumns(habit: Habit, value: HabitValue): ValueColumns {
     case 'choice':
     case 'text':
       return { ...empty, txt: typeof value === 'string' ? value : null };
+    case 'retro':
+      return isRetroValue(value)
+        ? { ...empty, txt: value.a, meta: { q: value.q } }
+        : empty;
   }
 }
 
@@ -187,6 +224,10 @@ export function columnsToValue(habit: Habit, cols: ValueColumns): HabitValue {
       return cols.txt ?? defaultValue(habit);
     case 'text':
       return cols.txt ?? '';
+    case 'retro': {
+      const meta = cols.meta as { q?: unknown } | null | undefined;
+      return { q: typeof meta?.q === 'string' ? meta.q : '', a: cols.txt ?? '' };
+    }
   }
 }
 
@@ -196,9 +237,9 @@ export function columnsToValue(habit: Habit, cols: ValueColumns): HabitValue {
  * row is one you skipped, not one you deliberately recorded as zero.
  */
 export function isRecorded(habit: Habit, value: HabitValue): boolean {
-  const def = defaultValue(habit);
   if (habit.kind === 'text') return typeof value === 'string' && value.trim() !== '';
-  return value !== def && value !== null;
+  if (habit.kind === 'retro') return isRetroValue(value) && value.a.trim() !== '';
+  return value !== defaultValue(habit) && value !== null;
 }
 
 export function emptyDay(date: string): DayEntry {

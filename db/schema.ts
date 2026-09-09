@@ -79,6 +79,13 @@ export const entryValues = pgTable(
     num: doublePrecision('num'),
     txt: text('txt'),
     flag: boolean('flag'),
+    /**
+     * Context the value cannot carry on its own. A retrospective answer keeps
+     * the question it was written to here, so a day read back in a year still
+     * says what was asked — deriving the question from the date would quietly
+     * reassign old answers the moment the question set grows.
+     */
+    meta: jsonb('meta'),
   },
   (t) => [
     primaryKey({ columns: [t.date, t.habitId] }),

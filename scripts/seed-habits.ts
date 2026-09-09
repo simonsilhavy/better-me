@@ -26,6 +26,26 @@ type SeedHabit = {
   role?: 'verdict' | 'note';
 };
 
+const CHECK = [
+  { value: 'ano', label: '✓ Splněno', tone: 'good' },
+  { value: 'ne', label: '✗ Nesplněno', tone: 'bad' },
+];
+
+const RETRO_QUESTIONS = [
+  { id: 'energie', text: 'Co dneska stálo nejvíc energie — a stálo to za to?' },
+  { id: 'nechtelo', text: 'Kdy jsi udělal něco, co se ti nechtělo?' },
+  { id: 'odlozil', text: 'Co jsi odložil a proč zrovna to?' },
+  { id: 'pochvala', text: 'Za co bys sám sebe dneska pochválil?' },
+  { id: 'jinak', text: 'Co bys udělal jinak, kdyby byl dnešek znovu?' },
+  { id: 'slo-samo', text: 'Kdy ti to dneska šlo samo?' },
+  { id: 'rozhodilo', text: 'Co tě rozhodilo a jak dlouho trvalo se vrátit?' },
+  { id: 'o-sobe', text: 'Co ses dneska dozvěděl o sobě?' },
+  { id: 'unava-hlava', text: 'Bránila ti víc únava, nebo hlava?' },
+  { id: 'zitrek', text: 'Kdyby měl být zítřek lepší o jednu jedinou věc, jaká?' },
+  { id: 'rekl-ne', text: 'Na co jsi dneska řekl ne?' },
+  { id: 'za-tyden', text: 'Co z dneška bude mít smysl ještě za týden?' },
+];
+
 const PLAN: { key: string; label: string; habits: SeedHabit[] }[] = [
   {
     key: 'energie',
@@ -36,20 +56,28 @@ const PLAN: { key: string; label: string; habits: SeedHabit[] }[] = [
     ],
   },
   {
-    key: 'zdravi',
-    label: 'Zdraví',
+    key: 'cviceni',
+    label: 'Cvičení',
     habits: [
       { key: 'kliky', label: 'Kliky', kind: 'counter', config: { min: 0, max: 250, step: 5 } },
       { key: 'drepy', label: 'Dřepy', kind: 'counter', config: { min: 0, max: 250, step: 5 } },
+      { key: 'beh', label: 'Uběhnuto', kind: 'counter', config: { min: 0, max: 30, step: 0.5, unit: 'km' } },
+    ],
+  },
+  {
+    key: 'zdravi',
+    label: 'Zdraví',
+    habits: [
       {
-        key: 'shake',
-        label: 'Protein shake',
+        key: 'protahovani',
+        label: 'Protahování',
         kind: 'choice',
         config: {
           options: [
-            { value: '0', label: '0', tone: 'bad' },
-            { value: '1', label: '1', tone: 'partial' },
-            { value: '2', label: '2', tone: 'good' },
+            { value: 'zadne', label: 'Žádné', tone: 'bad' },
+            { value: 'horni', label: 'Horní', tone: 'partial' },
+            { value: 'dolni', label: 'Dolní', tone: 'partial' },
+            { value: 'cele', label: 'Celé', tone: 'good' },
           ],
         },
       },
@@ -65,19 +93,25 @@ const PLAN: { key: string; label: string; habits: SeedHabit[] }[] = [
           ],
         },
       },
+    ],
+  },
+  {
+    key: 'strava',
+    label: 'Strava',
+    habits: [
       {
-        key: 'protahovani',
-        label: 'Protahování',
+        key: 'shake',
+        label: 'Protein shake',
         kind: 'choice',
         config: {
           options: [
-            { value: 'zadne', label: 'Žádné', tone: 'bad' },
-            { value: 'horni', label: 'Horní', tone: 'partial' },
-            { value: 'dolni', label: 'Dolní', tone: 'partial' },
-            { value: 'cele', label: 'Celé', tone: 'good' },
+            { value: '0', label: '0', tone: 'bad' },
+            { value: '1', label: '1', tone: 'partial' },
+            { value: '2', label: '2', tone: 'good' },
           ],
         },
       },
+      { key: 'proteinOdpo', label: 'Odpolední protein', kind: 'choice', config: { clearable: true, options: CHECK } },
     ],
   },
   {
@@ -88,28 +122,9 @@ const PLAN: { key: string; label: string; habits: SeedHabit[] }[] = [
         key: 'instagram',
         label: 'Instagram',
         kind: 'choice',
-        config: {
-          hint: 'pravidlo drženo do 17:00',
-          // No default: a principle you did not keep is an answer, not a blank.
-          clearable: true,
-          options: [
-            { value: 'ano', label: '✓ Splněno', tone: 'good' },
-            { value: 'ne', label: '✗ Nesplněno', tone: 'bad' },
-          ],
-        },
+        config: { hint: 'pravidlo drženo do 17:00', clearable: true, options: CHECK },
       },
-      {
-        key: 'resolveNow',
-        label: 'Co otevřu, dořeším',
-        kind: 'choice',
-        config: {
-          clearable: true,
-          options: [
-            { value: 'ano', label: '✓ Splněno', tone: 'good' },
-            { value: 'ne', label: '✗ Nesplněno', tone: 'bad' },
-          ],
-        },
-      },
+      { key: 'resolveNow', label: 'Co otevřu, dořeším', kind: 'choice', config: { clearable: true, options: CHECK } },
     ],
   },
   {
@@ -117,6 +132,14 @@ const PLAN: { key: string; label: string; habits: SeedHabit[] }[] = [
     label: 'Práce',
     habits: [
       { key: 'dpMinutes', label: 'Daňová Pohoda', kind: 'duration', config: { min: 0, max: 480, step: 15 } },
+      { key: 'betterMe', label: 'BetterMe', kind: 'duration', config: { min: 0, max: 480, step: 15 } },
+    ],
+  },
+  {
+    key: 'retrospektiva',
+    label: 'Retrospektiva',
+    habits: [
+      { key: 'retro', label: 'Retrospektiva', kind: 'retro', config: { maxLength: 4000, questions: RETRO_QUESTIONS } },
     ],
   },
   {
@@ -141,7 +164,7 @@ const PLAN: { key: string; label: string; habits: SeedHabit[] }[] = [
         label: 'Poznámka',
         kind: 'text',
         role: 'note',
-        config: { maxLength: 4000, placeholder: 'Jak to dneska šlo…' },
+        config: { maxLength: 4000, hideLabel: true, placeholder: 'Jaký máš z dneška pocit?' },
       },
     ],
   },

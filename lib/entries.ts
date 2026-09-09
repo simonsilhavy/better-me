@@ -50,7 +50,13 @@ export async function getHabitsById(): Promise<Map<number, Habit>> {
 
 function buildDay(
   date: string,
-  rows: { habitId: number; num: number | null; txt: string | null; flag: boolean | null }[],
+  rows: {
+    habitId: number;
+    num: number | null;
+    txt: string | null;
+    flag: boolean | null;
+    meta: unknown;
+  }[],
   byId: Map<number, Habit>,
   updatedAt: Date | null,
 ): DayEntry {
@@ -74,6 +80,7 @@ export async function getDay(date: string): Promise<DayEntry> {
         num: entryValues.num,
         txt: entryValues.txt,
         flag: entryValues.flag,
+        meta: entryValues.meta,
       })
       .from(entryValues)
       .where(eq(entryValues.date, date)),
@@ -93,6 +100,7 @@ export async function getRange(from: string, to: string): Promise<DayEntry[]> {
       num: entryValues.num,
       txt: entryValues.txt,
       flag: entryValues.flag,
+      meta: entryValues.meta,
     })
     .from(entryValues)
     .where(and(gte(entryValues.date, from), lte(entryValues.date, to)))
@@ -210,7 +218,13 @@ export async function upsertDay(
 
   const saved: string[] = [];
   const ignored: string[] = [];
-  const toWrite: { habitId: number; num: number | null; txt: string | null; flag: boolean | null }[] = [];
+  const toWrite: {
+    habitId: number;
+    num: number | null;
+    txt: string | null;
+    flag: boolean | null;
+    meta: unknown;
+  }[] = [];
   const toClear: number[] = [];
 
   for (const [key, raw] of Object.entries(input)) {
@@ -231,7 +245,8 @@ export async function upsertDay(
     if (value === null) {
       toClear.push(habit.id);
     } else {
-      toWrite.push({ habitId: habit.id, ...valueToColumns(habit, value) });
+      const cols = valueToColumns(habit, value);
+      toWrite.push({ habitId: habit.id, ...cols, meta: cols.meta ?? null });
     }
   }
 
@@ -250,6 +265,7 @@ export async function upsertDay(
           num: sql`excluded.num`,
           txt: sql`excluded.txt`,
           flag: sql`excluded.flag`,
+          meta: sql`excluded.meta`,
         },
       });
   }

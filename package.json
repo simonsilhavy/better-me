@@ -14,7 +14,8 @@
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed:habits": "tsx scripts/seed-habits.ts",
     "db:update:tones": "tsx scripts/update-habit-tones.ts",
-    "db:principles": "tsx scripts/principles-to-choice.ts"
+    "db:principles": "tsx scripts/principles-to-choice.ts",
+    "db:restructure": "tsx scripts/restructure-groups.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",

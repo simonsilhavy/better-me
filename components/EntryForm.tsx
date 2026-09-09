@@ -208,6 +208,7 @@ export function EntryForm({
               key={habit.id}
               habit={habit}
               value={values[habit.key]}
+              date={entry.date}
               answered={answered.has(habit.key)}
               onChange={(v) => set(habit, v)}
             />
@@ -227,6 +228,7 @@ export function EntryForm({
               key={habit.id}
               habit={habit}
               value={values[habit.key]}
+              date={entry.date}
               answered={answered.has(habit.key)}
               onChange={(v) => set(habit, v)}
             />
