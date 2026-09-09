@@ -107,10 +107,19 @@ export function EntryForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entry.date]);
 
-  const set = (key: string, value: HabitValue) => {
-    const nextAnswered = answered.has(key) ? answered : new Set(answered).add(key);
+  const set = (habit: Habit, value: HabitValue) => {
+    // null means "take that answer back": the control returns to its default
+    // and the habit counts as unanswered again, exactly as before it was
+    // touched. Saving then clears whatever was recorded for it.
+    const clearing = value === null;
+    const nextValue = clearing ? defaultValue(habit) : value;
+
+    const nextAnswered = new Set(answered);
+    if (clearing) nextAnswered.delete(habit.key);
+    else nextAnswered.add(habit.key);
+
     setValues((prev) => {
-      const next = { ...prev, [key]: value };
+      const next = { ...prev, [habit.key]: nextValue };
       // The draft carries which habits were answered, not just their values:
       // an answer that happens to equal the default is still an answer.
       writeDraft(entry.date, { values: next, answered: [...nextAnswered] });
@@ -123,11 +132,14 @@ export function EntryForm({
 
   const onSave = () => {
     startTransition(async () => {
-      // Only answered habits are sent. An untouched control is not a claim
-      // about the day, and sending its default would record one.
-      const payload = Object.fromEntries(
-        habits.filter((h) => answered.has(h.key)).map((h) => [h.key, values[h.key]]),
-      );
+      // Answered habits are sent as they stand. An untouched control is not a
+      // claim about the day, so it is left out — unless the day already held a
+      // value for it, in which case null goes out to clear what was recorded.
+      const payload: Record<string, HabitValue> = {};
+      for (const h of habits) {
+        if (answered.has(h.key)) payload[h.key] = values[h.key];
+        else if (entry.values[h.key] !== undefined) payload[h.key] = null;
+      }
       const result = await saveDay(entry.date, payload);
       if (result.ok) {
         clearDraft(entry.date);
@@ -197,7 +209,7 @@ export function EntryForm({
               habit={habit}
               value={values[habit.key]}
               answered={answered.has(habit.key)}
-              onChange={(v) => set(habit.key, v)}
+              onChange={(v) => set(habit, v)}
             />
           ))}
         </GroupPanel>
@@ -216,7 +228,7 @@ export function EntryForm({
               habit={habit}
               value={values[habit.key]}
               answered={answered.has(habit.key)}
-              onChange={(v) => set(habit.key, v)}
+              onChange={(v) => set(habit, v)}
             />
           ))}
         </GroupPanel>

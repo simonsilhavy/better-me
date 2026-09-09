@@ -76,7 +76,10 @@ export function HabitControl({
           <Segmented<string | null>
             value={current}
             toned={answered}
-            clearable={cfg.clearable === true}
+            /* Only an answer can be taken back. The default option looks
+               selected on an untouched day, so treating a tap on it as a clear
+               would make that option impossible to choose. */
+            clearable={answered}
             onChange={(next) => onChange(next)}
             options={(cfg.options ?? []).map((o) => ({
               value: o.value,
