@@ -12,7 +12,14 @@ export const HABIT_KINDS = [
 export type HabitKind = (typeof HABIT_KINDS)[number];
 export type HabitRole = 'verdict' | 'note';
 
-export type ChoiceOption = { value: string; label: string };
+/**
+ * `tone` says what the choice means, not what colour to paint: done, partly
+ * done, or not done. The control turns that into a colour, so a habit created
+ * later can carry the same meaning without hard-coding its palette.
+ */
+export type ChoiceTone = 'good' | 'partial' | 'bad';
+
+export type ChoiceOption = { value: string; label: string; tone?: ChoiceTone };
 
 export type HabitConfig = {
   min?: number;

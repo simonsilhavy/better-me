@@ -43,19 +43,25 @@ const PLAN: { key: string; label: string; habits: SeedHabit[] }[] = [
       { key: 'drepy', label: 'Dřepy', kind: 'counter', config: { min: 0, max: 250, step: 5 } },
       {
         key: 'shake',
-        label: 'Shake',
-        kind: 'choice',
-        config: { options: [{ value: '0', label: '0' }, { value: '1', label: '1' }, { value: '2', label: '2' }] },
-      },
-      {
-        key: 'sprcha',
-        label: 'Sprcha',
+        label: 'Protein shake',
         kind: 'choice',
         config: {
           options: [
-            { value: 'none', label: 'Žádná' },
-            { value: 'partial', label: 'Částečná' },
-            { value: 'full', label: 'Celá' },
+            { value: '0', label: '0', tone: 'bad' },
+            { value: '1', label: '1', tone: 'partial' },
+            { value: '2', label: '2', tone: 'good' },
+          ],
+        },
+      },
+      {
+        key: 'sprcha',
+        label: 'Studená sprcha',
+        kind: 'choice',
+        config: {
+          options: [
+            { value: 'none', label: 'Žádná', tone: 'bad' },
+            { value: 'partial', label: 'Částečná', tone: 'partial' },
+            { value: 'full', label: 'Celá', tone: 'good' },
           ],
         },
       },
@@ -64,12 +70,11 @@ const PLAN: { key: string; label: string; habits: SeedHabit[] }[] = [
         label: 'Protahování',
         kind: 'choice',
         config: {
-          clearable: true,
-          hint: 'klikni znovu pro zrušení',
           options: [
-            { value: 'horni', label: 'Horní' },
-            { value: 'dolni', label: 'Dolní' },
-            { value: 'cele', label: 'Celé' },
+            { value: 'zadne', label: 'Žádné', tone: 'bad' },
+            { value: 'horni', label: 'Horní', tone: 'partial' },
+            { value: 'dolni', label: 'Dolní', tone: 'partial' },
+            { value: 'cele', label: 'Celé', tone: 'good' },
           ],
         },
       },
@@ -103,8 +108,8 @@ const PLAN: { key: string; label: string; habits: SeedHabit[] }[] = [
           clearable: true,
           hint: 'klikni znovu pro zrušení',
           options: [
-            { value: 'win', label: 'Výhra' },
-            { value: 'loss', label: 'Prohra' },
+            { value: 'win', label: 'Výhra', tone: 'good' },
+            { value: 'loss', label: 'Prohra', tone: 'bad' },
           ],
         },
       },

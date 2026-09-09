@@ -63,23 +63,18 @@ export function HabitControl({
 
     case 'choice': {
       const current = typeof value === 'string' ? value : null;
-      const isVerdict = habit.role === 'verdict';
-      const options = cfg.options ?? [];
 
       return (
         <Field label={habit.label} hint={cfg.hint}>
           <Segmented<string | null>
             value={current}
             clearable={cfg.clearable === true}
-            activeColor={
-              isVerdict
-                ? current === options[0]?.value
-                  ? 'var(--win)'
-                  : 'var(--loss)'
-                : undefined
-            }
             onChange={(next) => onChange(next)}
-            options={options.map((o) => ({ value: o.value, label: o.label }))}
+            options={(cfg.options ?? []).map((o) => ({
+              value: o.value,
+              label: o.label,
+              tone: o.tone,
+            }))}
           />
         </Field>
       );

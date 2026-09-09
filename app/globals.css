@@ -10,6 +10,7 @@
   --muted: #8b90a3;
   --accent: #6c8cff;
   --win: #35c48a;
+  --warn: #e0a44a;
   --loss: #ef5f6b;
   --track: #272b38;
 }
@@ -23,6 +24,7 @@
   --color-muted: var(--muted);
   --color-accent: var(--accent);
   --color-win: var(--win);
+  --color-warn: var(--warn);
   --color-loss: var(--loss);
 }
 
