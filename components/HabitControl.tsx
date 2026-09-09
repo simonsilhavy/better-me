@@ -44,7 +44,12 @@ export function HabitControl({
           : `${n}${cfg.unit ? ` ${cfg.unit}` : ''}`;
 
       return (
-        <Field label={habit.label} hint={cfg.hint} value={display}>
+        <Field
+          label={habit.label}
+          hint={cfg.hint}
+          value={display}
+          onClear={answered ? () => onChange(null) : undefined}
+        >
           <Slider
             ariaLabel={habit.label}
             value={n}

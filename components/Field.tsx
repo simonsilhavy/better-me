@@ -2,11 +2,14 @@ export function Field({
   label,
   hint,
   value,
+  onClear,
   children,
 }: {
   label: string;
   hint?: string;
   value?: string;
+  /** Present once the habit holds an answer, to take that answer back. */
+  onClear?: () => void;
   children: React.ReactNode;
 }) {
   return (
@@ -18,11 +21,24 @@ export function Field({
             <span className="ml-2 text-xs text-[var(--muted)]">{hint}</span>
           ) : null}
         </div>
-        {value ? (
-          <span className="text-sm font-semibold tabular-nums text-[var(--text)]">
-            {value}
-          </span>
-        ) : null}
+        <span className="flex items-center gap-2">
+          {value ? (
+            <span className="text-sm font-semibold tabular-nums text-[var(--text)]">
+              {value}
+            </span>
+          ) : null}
+          {onClear ? (
+            <button
+              type="button"
+              onClick={onClear}
+              aria-label={`Zrušit zápis: ${label}`}
+              title="Zrušit zápis"
+              className="bm-seg bm-press cursor-pointer rounded-md px-1.5 text-xs leading-5"
+            >
+              ×
+            </button>
+          ) : null}
+        </span>
       </div>
       {children}
     </div>

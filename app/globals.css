@@ -121,6 +121,13 @@ body {
   color: var(--text);
 }
 
+/* Every tap gets an immediate answer, before any round trip resolves. */
+.bm-seg:active:not(:disabled),
+.bm-press:active:not(:disabled) {
+  transform: scale(0.95);
+  filter: brightness(1.25);
+}
+
 .bm-seg[data-active='true'] {
   background: var(--accent);
   border-color: var(--accent);

@@ -84,8 +84,32 @@ const PLAN: { key: string; label: string; habits: SeedHabit[] }[] = [
     key: 'principy',
     label: 'Principy',
     habits: [
-      { key: 'instagram', label: 'Instagram', kind: 'boolean', config: { hint: 'pravidlo drženo do 17:00' } },
-      { key: 'resolveNow', label: 'Co otevřu, dořeším', kind: 'boolean', config: {} },
+      {
+        key: 'instagram',
+        label: 'Instagram',
+        kind: 'choice',
+        config: {
+          hint: 'pravidlo drženo do 17:00',
+          // No default: a principle you did not keep is an answer, not a blank.
+          clearable: true,
+          options: [
+            { value: 'ano', label: '✓ Splněno', tone: 'good' },
+            { value: 'ne', label: '✗ Nesplněno', tone: 'bad' },
+          ],
+        },
+      },
+      {
+        key: 'resolveNow',
+        label: 'Co otevřu, dořeším',
+        kind: 'choice',
+        config: {
+          clearable: true,
+          options: [
+            { value: 'ano', label: '✓ Splněno', tone: 'good' },
+            { value: 'ne', label: '✗ Nesplněno', tone: 'bad' },
+          ],
+        },
+      },
     ],
   },
   {
@@ -106,7 +130,6 @@ const PLAN: { key: string; label: string; habits: SeedHabit[] }[] = [
         role: 'verdict',
         config: {
           clearable: true,
-          hint: 'klikni znovu pro zrušení',
           options: [
             { value: 'win', label: 'Výhra', tone: 'good' },
             { value: 'loss', label: 'Prohra', tone: 'bad' },

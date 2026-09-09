@@ -63,7 +63,6 @@ async function main() {
       key: 'verdict',
       config: {
         clearable: true,
-        hint: 'klikni znovu pro zrušení',
         options: [
           { value: 'win', label: 'Výhra', tone: 'good' },
           { value: 'loss', label: 'Prohra', tone: 'bad' },

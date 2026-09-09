@@ -28,7 +28,9 @@ export function SessionKeeper() {
     let stopped = false;
 
     const beat = async () => {
-      if (stopped) return;
+      // A hidden page shouldn't hold a session open; a visible one always
+      // should, which is why returning to the app beats immediately below.
+      if (stopped || document.visibilityState === 'hidden') return;
       try {
         const response = await fetch('/api/session/ping', { method: 'POST' });
         if (response.status === 401) router.replace('/login');
@@ -40,9 +42,17 @@ export function SessionKeeper() {
     void beat();
     const timer = setInterval(beat, HEARTBEAT_MS);
 
+    // Browsers throttle or freeze timers in background tabs, so coming back is
+    // its own signal rather than something the interval can be trusted to notice.
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void beat();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+
     return () => {
       stopped = true;
       clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisible);
     };
   }, [router, pathname]);
 

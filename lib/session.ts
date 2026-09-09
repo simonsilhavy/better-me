@@ -5,11 +5,15 @@ import { sessions } from '@/db/schema';
 export const SESSION_COOKIE = 'bm_session';
 
 /**
- * How long a session survives without a heartbeat. This is the whole mechanism:
- * an open page keeps beating, a closed one stops, and the session lapses. It is
- * therefore also the window in which a reopened browser is still logged in.
+ * How long a session survives without a heartbeat. An open page keeps beating,
+ * a closed one stops, and the session lapses.
+ *
+ * Ten minutes, not seconds: a browser sends its background tabs to sleep, so a
+ * short window ended sessions while the app was merely behind another app for a
+ * moment. This is also the window in which a reopened browser is still logged
+ * in — the price of not having a reliable "the app closed" signal.
  */
-export const SESSION_TTL_MS = 45_000;
+export const SESSION_TTL_MS = 10 * 60_000;
 
 export const SESSION_COOKIE_OPTIONS = {
   httpOnly: true,

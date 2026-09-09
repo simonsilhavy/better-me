@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { logout } from '@/app/actions';
+import { LogoutButton } from './LogoutButton';
 
 export function Header() {
   const pathname = usePathname();
@@ -23,16 +23,7 @@ export function Header() {
         <Link href="/nastaveni" className="bm-seg rounded-lg px-3 py-1.5">
           Úpravy
         </Link>
-        <form action={logout}>
-          <button
-            type="submit"
-            aria-label="Odhlásit"
-            title="Odhlásit"
-            className="bm-seg cursor-pointer rounded-lg px-3 py-1.5"
-          >
-            ⏻
-          </button>
-        </form>
+        <LogoutButton />
       </nav>
     </header>
   );
