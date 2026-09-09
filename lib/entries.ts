@@ -10,10 +10,12 @@ import {
   columnsToValue,
   defaultValue,
   emptyDay,
+  isRetroValue,
   rowToGroup,
   rowToHabit,
   valueToColumns,
 } from './domain';
+import { questionForDate } from './retro';
 
 /* ---------------------------------------------------------------- definice */
 
@@ -241,7 +243,15 @@ export async function upsertDay(
       continue;
     }
 
-    const value = coerceValue(habit, raw);
+    let value = coerceValue(habit, raw);
+
+    // A retro answer that arrives without a question -- the chat relay sends a
+    // bare string -- gets the day's own question pinned to it, so every stored
+    // answer keeps the question it answered even if the set changes later.
+    if (isRetroValue(value) && !value.q && value.a.trim() !== '') {
+      value = { ...value, q: questionForDate(habit, date)?.id ?? '' };
+    }
+
     if (value === null) {
       toClear.push(habit.id);
     } else {
