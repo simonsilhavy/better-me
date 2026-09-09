@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { SESSION_COOKIE, gateConfig, isValidSession, timingSafeEqual } from '@/lib/session';
+import { SESSION_COOKIE, gateConfig, timingSafeEqual, validateSession } from '@/lib/session';
 
 export const config = {
   // Everything except Next's own static output and the favicon.
@@ -27,7 +27,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (await isValidSession(request.cookies.get(SESSION_COOKIE)?.value)) {
+  if (await validateSession(request.cookies.get(SESSION_COOKIE)?.value)) {
     return NextResponse.next();
   }
 

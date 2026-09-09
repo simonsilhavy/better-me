@@ -94,6 +94,12 @@ export const entryValues = pgTable(
  */
 export const sessions = pgTable('sessions', {
   id: text('id').primaryKey(),
+  /**
+   * A public handle for this exact session. The page carries it and sends it
+   * when it closes, so a goodbye always retires the session that page was
+   * holding — never whichever one happens to be in the cookie jar by then.
+   */
+  tag: text('tag').notNull().unique(),
   expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });

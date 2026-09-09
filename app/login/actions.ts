@@ -70,7 +70,7 @@ export async function submitPin(pin: string, next: string): Promise<LoginResult>
   await clearFailures(ip);
 
   const store = await cookies();
-  store.set(SESSION_COOKIE, await createSession(), SESSION_COOKIE_OPTIONS);
+  store.set(SESSION_COOKIE, (await createSession()).id, SESSION_COOKIE_OPTIONS);
 
   redirect(safeNext(next));
 }

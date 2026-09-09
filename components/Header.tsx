@@ -20,6 +20,9 @@ export function Header() {
         <Link href="/history" className="bm-seg rounded-lg px-3 py-1.5">
           Historie
         </Link>
+        <Link href="/nastaveni" className="bm-seg rounded-lg px-3 py-1.5">
+          Úpravy
+        </Link>
         <form action={logout}>
           <button
             type="submit"

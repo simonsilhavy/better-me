@@ -18,7 +18,8 @@ Replaces the single-file `better-me.html` artifact whose data lived hardcoded in
 | `/` | Today's entry (date resolved in `Europe/Prague`, not server UTC) |
 | `/day/[date]` | Any specific day, deep-linkable; prev/next arrows kept |
 | `/history` | Win/loss + streak stats, 14-day bar chart, full clickable history |
-| `/login` | Password gate, when one is configured |
+| `/nastaveni` | Groups and habits: create, rename, reorder, move, archive, delete |
+| `/login` | PIN gate, when one is configured |
 
 ## Access control
 
@@ -57,10 +58,17 @@ restore session cookies when they reopen ("continue where you left off"), so
 closing the browser did not actually end the session — the cookie came back
 intact and still verified.
 
-With the session server-side, closing the app ends it for real: `pagehide` sends
-a beacon to `/api/session/close`, which deletes the row. A heartbeat every 45 s
-holds the session open while the page is in use, and a 2-minute TTL is the
-backstop for a browser that dies without sending the beacon.
+A session lasts 45 seconds without a heartbeat; an open page beats every 15 s.
+Close the tab or the browser and the session lapses within that window, so
+coming back means entering the PIN again. **The window is the honest limit:
+reopening within ~45 seconds still gets you in.**
+
+An earlier version also sent a `pagehide` beacon so a close ended the session
+instantly. It was removed: `pagehide` fires on ordinary same-tab navigation too,
+where it revoked the session the incoming page was about to use, and because
+cookies are shared across an origin's pages a departing page could not reliably
+distinguish its own session from its successor's. Being logged out at random
+mid-use is worse than a short predictable window.
 
 Because a session can end mid-entry, the form mirrors unsaved work into
 `localStorage` and restores it after logging back in.

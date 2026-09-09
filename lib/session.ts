@@ -5,11 +5,11 @@ import { sessions } from '@/db/schema';
 export const SESSION_COOKIE = 'bm_session';
 
 /**
- * Backstop lifetime. The page extends it with a heartbeat while it is open and
- * drops the session outright when it closes, so this only decides how long a
- * session lingers when the browser dies without a chance to say goodbye.
+ * How long a session survives without a heartbeat. This is the whole mechanism:
+ * an open page keeps beating, a closed one stops, and the session lapses. It is
+ * therefore also the window in which a reopened browser is still logged in.
  */
-export const SESSION_TTL_MS = 2 * 60_000;
+export const SESSION_TTL_MS = 45_000;
 
 export const SESSION_COOKIE_OPTIONS = {
   httpOnly: true,
@@ -30,47 +30,57 @@ function newSessionId(): string {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-export async function createSession(): Promise<string> {
+export type NewSession = { id: string; tag: string };
+
+export async function createSession(): Promise<NewSession> {
   const id = newSessionId();
+  const tag = newSessionId().slice(0, 32);
   await db.insert(sessions).values({
     id,
+    tag,
     expiresAt: new Date(Date.now() + SESSION_TTL_MS),
   });
-  return id;
+  return { id, tag };
 }
 
-export async function isValidSession(id: string | undefined): Promise<boolean> {
-  if (!id || !/^[0-9a-f]{64}$/.test(id)) return false;
+/** Returns the live session's tag, or null when there isn't one. */
+export async function validateSession(
+  id: string | undefined,
+): Promise<{ tag: string } | null> {
+  if (!id || !/^[0-9a-f]{64}$/.test(id)) return null;
 
   const [row] = await db
-    .select({ id: sessions.id })
+    .select({ tag: sessions.tag })
     .from(sessions)
     .where(and(eq(sessions.id, id), gt(sessions.expiresAt, sql`now()`)))
     .limit(1);
 
-  return Boolean(row);
+  return row ? { tag: row.tag } : null;
 }
 
-/** Extends a live session. Returns false if it has already gone. */
-export async function touchSession(id: string | undefined): Promise<boolean> {
-  if (!id || !/^[0-9a-f]{64}$/.test(id)) return false;
+/** Extends a live session and returns its tag, or null if it has gone. */
+export async function touchSession(
+  id: string | undefined,
+): Promise<{ tag: string } | null> {
+  if (!id || !/^[0-9a-f]{64}$/.test(id)) return null;
 
   const [row] = await db
     .update(sessions)
     .set({ expiresAt: new Date(Date.now() + SESSION_TTL_MS) })
     .where(and(eq(sessions.id, id), gt(sessions.expiresAt, sql`now()`)))
-    .returning({ id: sessions.id });
+    .returning({ tag: sessions.tag });
 
   // Cheap opportunistic sweep; the table should never hold more than a few rows.
   await db.delete(sessions).where(lt(sessions.expiresAt, sql`now()`));
 
-  return Boolean(row);
+  return row ? { tag: row.tag } : null;
 }
 
 export async function closeSession(id: string | undefined): Promise<void> {
   if (!id) return;
   await db.delete(sessions).where(eq(sessions.id, id));
 }
+
 
 export function timingSafeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
