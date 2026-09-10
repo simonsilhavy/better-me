@@ -51,7 +51,7 @@ export const RETRO_QUESTIONS: RetroQuestion[] = [
   { id: 'rekl-ne', text: 'Na co jsi dneska řekl ne?' },
   { id: 'jinak', text: 'Co bys udělal jinak, pokud bys zažil dnešek znovu?' },
   { id: 'potvrzeni-zvenci', text: 'Kde jsi dnes hledal potvrzení nebo pochvalu zvenčí místo toho, aby ses spolehl na vlastní úsudek?' },
-  { id: 'na-zitra', text: 'Co sis odložil na zítra, i když bys to zvládl dnes?' },
+  { id: 'konec-prace', text: 'Kdy jsi dneska přestal pracovat a nechal to být?' },
   { id: 'zapamatovat', text: 'Co si z dneška chceš zapamatovat?' },
   { id: 'neco-videl', text: 'Co jsi dneska udělal jen proto, aby to někdo viděl?' },
   { id: 'posledni-den', text: 'Pokud by dnes byl tvůj poslední den, stál by za to?' },
