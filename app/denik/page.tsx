@@ -2,6 +2,13 @@ import Link from 'next/link';
 import { getAnsweredQuestions, getDiary } from '@/lib/diary';
 import { formatCz, weekday } from '@/lib/date';
 
+/** „1 odpověď / 2-4 odpovědi / 5+ odpovědí“ — čeština počítá ve třech tvarech. */
+function czCount(n: number): string {
+  if (n === 1) return '1 odpověď';
+  if (n >= 2 && n <= 4) return `${n} odpovědi`;
+  return `${n} odpovědí`;
+}
+
 export const dynamic = 'force-dynamic';
 
 const PAGE = 60;
@@ -104,9 +111,13 @@ export default async function DiaryPage({
       )}
 
       {active && (
-        <p className="px-1 text-sm text-[var(--muted)]">
-          Odpovědi na <span className="text-[var(--text)]">„{active.text}“</span>
-        </p>
+        <div className="bm-card p-4">
+          <p className="text-sm text-[var(--text)]">„{active.text}“</p>
+          <p className="mt-1 text-[11px] text-[var(--muted)]">
+            {czCount(active.count)} — nejnovější nahoře, takže se čte odshora dolů
+            zpátky v čase. Otázka se vrací zhruba jednou měsíčně.
+          </p>
+        </div>
       )}
 
       {shown.length === 0 ? (
@@ -127,9 +138,16 @@ export default async function DiaryPage({
                   {weekday(note.date)} {formatCz(note.date)}
                 </Link>
                 {note.question ? (
-                  <span className="text-xs" style={{ color: 'var(--accent)' }}>
+                  // Tapping the prompt pulls up every answer to it — the whole
+                  // point of storing which question was asked.
+                  <Link
+                    href={`/denik?q=${encodeURIComponent(note.questionId ?? '')}`}
+                    className="text-xs underline-offset-2 hover:underline"
+                    style={{ color: 'var(--accent)' }}
+                    title="Ukázat všechny odpovědi na tuhle otázku"
+                  >
                     {note.question}
-                  </span>
+                  </Link>
                 ) : (
                   <span className="text-xs text-[var(--muted)]">{note.habit.label}</span>
                 )}

@@ -257,7 +257,14 @@ newest first, with full-text search.
 Because every retro answer stores the id of the question it answered, filtering
 by question is a plain equality check — the same prompt lines up across months
 even after its wording changes. The text shown is always the current wording, so
-a fixed typo reads correctly in old entries too.
+a fixed typo reads correctly in old entries too. Tapping the prompt above any
+answer opens every answer to it, newest first.
+
+That filter is why the question set is deliberately small: with one prompt a
+day, the length of `lib/retro-questions.ts` *is* how often a question comes
+back. Thirty-six entries means roughly monthly, about ten answers a year to the
+same prompt — a series you can read. A hundred prompts gave three a year, which
+is not.
 
 ## Přehled
 
@@ -316,7 +323,7 @@ npm run db:retro         # push lib/retro-questions.ts into the live habit
 
 Rehearsed from an empty database: dropping every table, replaying `drizzle/` and
 re-seeding reproduces the same 8 groups and 16 habits — including the 💪 on
-Cvičení, the 100 retrospective questions and the 0.1 km step — and running any
+Cvičení, the 36 retrospective questions and the 0.1 km step — and running any
 of them again changes nothing.
 
 `db:retro` refuses to write when a question id that some stored answer points at
