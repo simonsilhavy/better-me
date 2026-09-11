@@ -11,8 +11,13 @@
  * meaning, and the new 'zadne' is simply a value nothing has used yet.
  */
 import { config } from 'dotenv';
+
+import { refuseProduction } from './guard';
+
 config({ path: '.env.local' });
 config();
+
+refuseProduction('Updating habit tones');
 
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';

@@ -6,8 +6,13 @@
  * without touching recorded values or anything you have since rearranged.
  */
 import { config } from 'dotenv';
+
+import { refuseProduction } from './guard';
+
 config({ path: '.env.local' });
 config();
+
+refuseProduction('Seeding habits');
 
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';

@@ -10,8 +10,13 @@
  * Re-running is safe: every day is upserted by date.
  */
 import { config } from 'dotenv';
+
+import { refuseProduction } from './guard';
+
 config({ path: '.env.local' });
 config();
+
+refuseProduction('Seeding days');
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';

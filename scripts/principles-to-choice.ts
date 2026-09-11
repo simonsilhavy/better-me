@@ -9,8 +9,13 @@
  * true/false in `flag`, a choice stores its value in `txt`.
  */
 import { config } from 'dotenv';
+
+import { refuseProduction } from './guard';
+
 config({ path: '.env.local' });
 config();
+
+refuseProduction('Converting principles');
 
 import { neon } from '@neondatabase/serverless';
 

@@ -6,8 +6,13 @@
  * its group, so nothing measured is read or written here.
  */
 import { config } from 'dotenv';
+
+import { refuseProduction } from './guard';
+
 config({ path: '.env.local' });
 config();
+
+refuseProduction('Restructuring groups');
 
 import { neon } from '@neondatabase/serverless';
 import { RETRO_QUESTIONS } from '../lib/retro-questions';

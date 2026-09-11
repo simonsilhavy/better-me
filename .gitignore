@@ -49,4 +49,3 @@ next-env.d.ts
 
 # next.js agent rule files
 /AGENTS.md
-/CLAUDE.md

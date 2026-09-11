@@ -7,6 +7,7 @@
  */
 import { config } from 'dotenv';
 config({ path: '.env.local' });
+config();
 
 async function main() {
   const { neon } = await import('@neondatabase/serverless');
