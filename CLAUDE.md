@@ -157,12 +157,14 @@ a musí ho poslat uživatel.
 
 ## Stav a co dál
 
+**Plán dalších kroků je v `docs/DALSI-KROKY.md`** — seřazený podle toho,
+co odblokuje nejvíc dalšího, včetně nevyřešených otázek, které patří
+uživateli. Tenhle oddíl je jen shrnutí.
+
 Hotové a nasazené: srovnání Historie se zásadou, zkrácení zápisu
-(sbalování, proužek, autosave, oslavy), Deník, Přehled.
+(sbalování, proužek, autosave, oslavy), Deník, Přehled, stírací los,
+oddělení dev a produkční databáze.
 
-Otevřené: editor otázek v Úpravách, export dat, cíle na habit, PWA,
-večerní připomínka, archivace habitu z Úprav — viz plán rozvoje.
-Uživatel má vlastní další nápady k Přehledu, které chce probrat.
-
-**Stále chybí 45 dní historických zápisů** — `seed-data.json` je `[]`.
-Bez nich Přehled nemá co ukázat (zapíná se po 30 zapsaných dnech).
+Nejbližší blokující věc: **45 dní historických zápisů** — `seed-data.json`
+je `[]` a bez nich Přehled nemá co ukázat (zapíná se po 30 zapsaných
+dnech). Odkud data vzít, rozhoduje uživatel.
