@@ -21,7 +21,7 @@ import type { RetroQuestion } from './domain';
 export const RETRO_QUESTIONS: RetroQuestion[] = [
   { id: 'energie', text: 'Co dneska stálo nejvíc energie — a stálo to za to?' },
   { id: 'radost-komu', text: 'Komu jsi dneska udělal radost?' },
-  { id: 'odlozil', text: 'Co jsi odložil a proč zrovna to?' },
+  { id: 'neutratil', text: 'Za co jsi dnes nakonec neutratil peníze, i když jsi o tom přemýšlel?' },
   { id: 'rozhodilo', text: 'Co tě rozhodilo a jak dlouho trvalo se vrátit?' },
   { id: 'za-tyden', text: 'Co z dneška bude mít smysl ještě za týden?' },
   { id: 'slo-samo', text: 'Kdy ti to dneska šlo samo?' },
@@ -51,7 +51,7 @@ export const RETRO_QUESTIONS: RetroQuestion[] = [
   { id: 'rekl-ne', text: 'Na co jsi dneska řekl ne?' },
   { id: 'jinak', text: 'Co bys udělal jinak, pokud bys zažil dnešek znovu?' },
   { id: 'potvrzeni-zvenci', text: 'Kde jsi dnes hledal potvrzení nebo pochvalu zvenčí místo toho, aby ses spolehl na vlastní úsudek?' },
-  { id: 'konec-prace', text: 'Kdy jsi dneska přestal pracovat a nechal to být?' },
+  { id: 'na-zitra', text: 'Co sis odložil na zítra, i když bys to zvládl dnes?' },
   { id: 'zapamatovat', text: 'Co si z dneška chceš zapamatovat?' },
   { id: 'neco-videl', text: 'Co jsi dneska udělal jen proto, aby to někdo viděl?' },
   { id: 'posledni-den', text: 'Pokud by dnes byl tvůj poslední den, stál by za to?' },
