@@ -216,10 +216,11 @@ Ten poslední řádek je důležitý: kdyby se budoucí dny odemykaly podle hodi
 měl bys každý večer volný přístup k zítřejší otázce — tedy přesně to, čemu
 má zámek bránit, jen o den posunuté.
 
-**Jak to vypadá:** plátno s broušeným kovem. Zamčené je matnější a nese zámek
-s textem *„Počkej do večera / Setřít ji půjde po 20:00"*; odemčené je světlejší,
-má lesk a v rohu tlačítko *Odkrýt rovnou* pro ty, kdo stírat nechtějí a pro
-ovládání klávesnicí. Po setření zhruba 45 % zbytek sám odplyne.
+**Jak to vypadá:** plátno s broušeným kovem a diagonálním leskem. Zamčené
+a odemčené vypadají stejně — rozdíl nese text, ne barva. Zamčené říká
+*„Počkej do večera / Setřít ji půjde po 20:00"*, odemčené *„Dnešní otázka /
+Setři ji a odkryj"* a má v rohu tlačítko *Odkrýt rovnou* pro ty, kdo stírat
+nechtějí, a pro ovládání klávesnicí. Po setření zhruba 45 % zbytek sám odplyne.
 
 Otevřená stránka se kontroluje každých 30 vteřin, takže se ve 20:00 odemkne
 sama i na kartě, která zůstala celý večer na obrazovce.

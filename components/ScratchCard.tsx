@@ -65,19 +65,12 @@ export function ScratchCard({
     ctx.clearRect(0, 0, w, h);
 
     // Brushed metal: a diagonal sheen with a few lighter bands across it.
-    // A locked foil is duller — it should not look like it invites rubbing.
     const sheen = ctx.createLinearGradient(0, 0, w, h);
-    if (locked) {
-      sheen.addColorStop(0, '#232734');
-      sheen.addColorStop(0.5, '#2d3242');
-      sheen.addColorStop(1, '#212430');
-    } else {
-      sheen.addColorStop(0, '#2b3040');
-      sheen.addColorStop(0.42, '#3a4157');
-      sheen.addColorStop(0.5, '#4a5270');
-      sheen.addColorStop(0.58, '#3a4157');
-      sheen.addColorStop(1, '#272b38');
-    }
+    sheen.addColorStop(0, '#2b3040');
+    sheen.addColorStop(0.42, '#3a4157');
+    sheen.addColorStop(0.5, '#4a5270');
+    sheen.addColorStop(0.58, '#3a4157');
+    sheen.addColorStop(1, '#272b38');
     ctx.fillStyle = sheen;
     ctx.fillRect(0, 0, w, h);
 
@@ -92,23 +85,18 @@ export function ScratchCard({
     }
     ctx.globalAlpha = 1;
 
+    // Locked and scratchable look the same on purpose: the wording carries the
+    // difference, and a duller foil for "not yet" only made the card look off.
     ctx.textAlign = 'center';
-    const baseline = h / 2 - (locked ? 4 : 0);
-
-    if (locked) {
-      ctx.font = '18px ui-sans-serif, system-ui, sans-serif';
-      ctx.fillText('🔒', w / 2, baseline - 26);
-    }
-
-    ctx.fillStyle = locked ? '#8b90a3' : '#c3c8d6';
+    ctx.fillStyle = '#c3c8d6';
     ctx.font = '600 13px ui-sans-serif, system-ui, sans-serif';
-    ctx.fillText(title, w / 2, baseline - (hint ? 6 : -4));
+    ctx.fillText(title, w / 2, h / 2 - (hint ? 6 : -4));
     if (hint) {
-      ctx.fillStyle = locked ? '#6f748a' : '#8b90a3';
+      ctx.fillStyle = '#8b90a3';
       ctx.font = '11px ui-sans-serif, system-ui, sans-serif';
-      ctx.fillText(hint, w / 2, baseline + 14);
+      ctx.fillText(hint, w / 2, h / 2 + 14);
     }
-  }, [title, hint, locked]);
+  }, [title, hint]);
 
   useEffect(() => {
     paintFoil();
