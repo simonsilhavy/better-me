@@ -9,25 +9,31 @@ const REVEAL_AT = 0.45;
 const BRUSH = 24;
 
 /**
- * A foil you rub off to see what is underneath.
+ * A foil over a card — sometimes one you can rub off, sometimes one that does
+ * not budge yet.
  *
- * The children are rendered the whole time — the canvas simply covers them —
+ * The children are rendered the whole time and the canvas simply covers them,
  * because that is what makes rubbing feel like uncovering rather than like
- * waiting for a loading bar. While covered they are hidden from assistive
- * technology and the button below is the way in, so nothing depends on being
- * able to drag.
+ * waiting for a progress bar.
+ *
+ * `locked` is the honest state for "not yet": the foil takes no input at all
+ * and says so, rather than letting you rub at something that will never come
+ * off. Everything under it is `inert` either way.
  */
 export function ScratchCard({
   onReveal,
   title,
   hint,
+  locked = false,
   children,
 }: {
   onReveal: () => void;
   /** Printed on the foil — says what is under it. */
   title: string;
-  /** Smaller line under it, e.g. when it opens by itself. */
+  /** Smaller line under it, e.g. when it becomes scratchable. */
   hint?: string;
+  /** When true the foil refuses to come off and takes no pointer input. */
+  locked?: boolean;
   children: React.ReactNode;
 }) {
   const wrap = useRef<HTMLDivElement>(null);
@@ -59,12 +65,19 @@ export function ScratchCard({
     ctx.clearRect(0, 0, w, h);
 
     // Brushed metal: a diagonal sheen with a few lighter bands across it.
+    // A locked foil is duller — it should not look like it invites rubbing.
     const sheen = ctx.createLinearGradient(0, 0, w, h);
-    sheen.addColorStop(0, '#2b3040');
-    sheen.addColorStop(0.42, '#3a4157');
-    sheen.addColorStop(0.5, '#4a5270');
-    sheen.addColorStop(0.58, '#3a4157');
-    sheen.addColorStop(1, '#272b38');
+    if (locked) {
+      sheen.addColorStop(0, '#232734');
+      sheen.addColorStop(0.5, '#2d3242');
+      sheen.addColorStop(1, '#212430');
+    } else {
+      sheen.addColorStop(0, '#2b3040');
+      sheen.addColorStop(0.42, '#3a4157');
+      sheen.addColorStop(0.5, '#4a5270');
+      sheen.addColorStop(0.58, '#3a4157');
+      sheen.addColorStop(1, '#272b38');
+    }
     ctx.fillStyle = sheen;
     ctx.fillRect(0, 0, w, h);
 
@@ -80,15 +93,22 @@ export function ScratchCard({
     ctx.globalAlpha = 1;
 
     ctx.textAlign = 'center';
-    ctx.fillStyle = '#c3c8d6';
-    ctx.font = '600 13px ui-sans-serif, system-ui, sans-serif';
-    ctx.fillText(title, w / 2, h / 2 - (hint ? 6 : -4));
-    if (hint) {
-      ctx.fillStyle = '#8b90a3';
-      ctx.font = '11px ui-sans-serif, system-ui, sans-serif';
-      ctx.fillText(hint, w / 2, h / 2 + 14);
+    const baseline = h / 2 - (locked ? 4 : 0);
+
+    if (locked) {
+      ctx.font = '18px ui-sans-serif, system-ui, sans-serif';
+      ctx.fillText('🔒', w / 2, baseline - 26);
     }
-  }, [title, hint]);
+
+    ctx.fillStyle = locked ? '#8b90a3' : '#c3c8d6';
+    ctx.font = '600 13px ui-sans-serif, system-ui, sans-serif';
+    ctx.fillText(title, w / 2, baseline - (hint ? 6 : -4));
+    if (hint) {
+      ctx.fillStyle = locked ? '#6f748a' : '#8b90a3';
+      ctx.font = '11px ui-sans-serif, system-ui, sans-serif';
+      ctx.fillText(hint, w / 2, baseline + 14);
+    }
+  }, [title, hint, locked]);
 
   useEffect(() => {
     paintFoil();
@@ -170,17 +190,18 @@ export function ScratchCard({
         style={{
           opacity: fading ? 0 : 1,
           touchAction: 'none',
-          cursor: fading ? 'default' : 'grab',
-          pointerEvents: fading ? 'none' : 'auto',
+          cursor: fading || locked ? 'default' : 'grab',
+          pointerEvents: fading || locked ? 'none' : 'auto',
         }}
         onPointerDown={(e) => {
+          if (locked) return;
           down.current = true;
           last.current = null;
           e.currentTarget.setPointerCapture(e.pointerId);
           erase(e);
         }}
         onPointerMove={(e) => {
-          if (down.current) erase(e);
+          if (!locked && down.current) erase(e);
         }}
         onPointerUp={() => {
           down.current = false;
@@ -192,7 +213,7 @@ export function ScratchCard({
         }}
       />
 
-      {!fading && (
+      {!fading && !locked && (
         <button
           type="button"
           onClick={finish}

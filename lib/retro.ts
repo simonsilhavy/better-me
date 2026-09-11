@@ -39,28 +39,33 @@ export const REVEAL_HOUR = 20;
 export const revealKey = (date: string) => `bm-retro-revealed-${date}`;
 
 /**
- * Should the day's question still be hidden?
+ * What state the day's question is in.
+ *
+ * - `open` — the question is readable
+ * - `scratchable` — still under foil, and the foil can be rubbed off
+ * - `locked` — under foil, and the foil does not budge yet
  *
  * Knowing the prompt in the morning lets you arrange the day around having a
  * good answer to it — which is the same distortion as chasing a win, only
- * quieter. So it stays covered until the evening, and the reader can always
- * uncover it early on purpose.
+ * quieter. So the foil does not merely hide the question, it refuses to come
+ * off until the evening: the retrospective belongs to the end of the day, not
+ * to a plan made at breakfast.
  *
- * Past days are never covered: the day is over, there is nothing left to
- * stage. An answered day is never covered either — you cannot un-know what
- * you already wrote.
+ * Past days are open: the day is over, there is nothing left to stage. An
+ * answered day is open too — you cannot un-know what you already wrote.
+ * A future day stays locked even late at night, otherwise every evening would
+ * hand over tomorrow's question.
  */
-export function isCovered(input: {
+export function coverState(input: {
   date: string;
   todayDate: string;
   hasAnswer: boolean;
   uncoveredByHand: boolean;
   hour: number;
-}): boolean {
-  if (input.hasAnswer) return false;
-  if (input.uncoveredByHand) return false;
-  if (input.date < input.todayDate) return false;
-  // Today after the hour opens by itself; a future day never does.
-  if (input.date === input.todayDate && input.hour >= REVEAL_HOUR) return false;
-  return true;
+}): 'open' | 'scratchable' | 'locked' {
+  if (input.hasAnswer) return 'open';
+  if (input.uncoveredByHand) return 'open';
+  if (input.date < input.todayDate) return 'open';
+  if (input.date > input.todayDate) return 'locked';
+  return input.hour >= REVEAL_HOUR ? 'scratchable' : 'locked';
 }

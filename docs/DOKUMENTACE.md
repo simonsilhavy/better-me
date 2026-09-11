@@ -185,45 +185,59 @@ Vypadá to jako detail, ale je to nosná věc:
 - Odpověď zapsaná přes API jako holý řetězec (chat relay neví, jaká otázka
   padla) dostane otázku daného dne doplněnou automaticky při zápisu.
 
-### Stírací los: otázka je do večera zakrytá
+### Stírací los: otázka je do večera zamčená
 
-Otázka dne je zakrytá až do **20:00**, nebo dokud ji uživatel sám neodkryje.
+Otázka dne je zakrytá stíracím losem a **setřít ji jde až po 20:00**.
 
 **Proč:** kdo zná otázku ráno, může si den zařídit tak, aby na ni měl dobrou
 odpověď. Je to stejné zkreslení jako honit se za výhrou, jen jemnější a hůř
 viditelné — místo aby odpověď popisovala den, začne den sloužit odpovědi.
-Zakrytí to nezakazuje, jen to nedělá výchozím stavem: odkrýt dřív jde
-kdykoli, ale musí to být vědomé rozhodnutí, ne něco, do čeho se člověk
-připlete při ranním zápisu.
+Retrospektiva patří na konec dne, ne do plánu u snídaně, a zámek to říká
+natvrdo místo aby to jen doporučoval.
 
-**Jak to vypadá:** karta je pod stíracím losem — plátno s broušeným kovem,
-které se rozetře prstem nebo myší. Po setření zhruba 45 % zbytek sám zmizí.
-V rohu je tlačítko *Odkrýt rovnou* pro ty, kdo stírat nechtějí, a pro ovládání
-klávesnicí.
+**Tři stavy (`coverState()` v `lib/retro.ts`):**
 
-**Pravidla (`isCovered()` v `lib/retro.ts`):**
-
-| Situace | Zakryto? |
+| Stav | Co to znamená |
 | --- | --- |
-| dnešek před 20:00, nedotčeno | ano |
-| dnešek ve 20:00 a později | ne, otevře se sám |
-| dnešek, už setřeno | ne, pamatuje se to |
-| dnešek, už je odpověď | ne — co jsi napsal, nejde odenevědět |
-| minulý den | ne — den je pryč, není co zařizovat |
-| budoucí den | ano, a **neotevře se ani po 20:00** |
+| `locked` | pod losem, který nejde setřít — plátno nebere vstup a nese 🔒 |
+| `scratchable` | pod losem, který jde rozetřít prstem nebo myší |
+| `open` | otázka je čitelná |
 
-Otevřená karta se zkontroluje každých 30 vteřin, takže se ve 20:00 odkryje
-sama i na stránce, která zůstala celý večer otevřená.
+| Situace | Stav |
+| --- | --- |
+| dnešek před 20:00 | `locked` |
+| dnešek od 20:00 | `scratchable` |
+| dnešek, už setřeno | `open` — pamatuje se to |
+| dnešek, už je odpověď | `open` — co jsi napsal, nejde odenevědět |
+| minulý den | `open` — den je pryč, není co zařizovat |
+| budoucí den | `locked`, **a neodemkne se ani ve 23:00** |
+
+Ten poslední řádek je důležitý: kdyby se budoucí dny odemykaly podle hodiny,
+měl bys každý večer volný přístup k zítřejší otázce — tedy přesně to, čemu
+má zámek bránit, jen o den posunuté.
+
+**Jak to vypadá:** plátno s broušeným kovem. Zamčené je matnější a nese zámek
+s textem *„Počkej do večera / Setřít ji půjde po 20:00"*; odemčené je světlejší,
+má lesk a v rohu tlačítko *Odkrýt rovnou* pro ty, kdo stírat nechtějí a pro
+ovládání klávesnicí. Po setření zhruba 45 % zbytek sám odplyne.
+
+Otevřená stránka se kontroluje každých 30 vteřin, takže se ve 20:00 odemkne
+sama i na kartě, která zůstala celý večer na obrazovce.
 
 Že je karta setřená, si pamatuje `localStorage` pod klíčem
 `bm-retro-revealed-<datum>` — stejně jako sbalený oddíl je to věc zařízení,
 ne dat. Na druhém zařízení se setře znovu.
 
+**Důsledek, se kterým se počítá:** retrospektivu nejde vyplnit před 20:00,
+takže ani **celý den nejde dokončit dřív** — oslava konce dne (část 6) se
+před osmou nespustí. Je to záměr, ne vedlejší efekt: den není hotový, dokud
+se nad ním člověk nezastavil.
+
 **Známá mez:** text otázky je pod plátnem přítomný v DOM. Před čtečkou
 obrazovky i před tabulátorem je schovaný (`inert`), ale kdo se podívá do
 vývojářských nástrojů, přečte si ho. Bránit tomuhle by znamenalo otázku
 nevykreslovat vůbec — a pak by stírání neodkrývalo nic a ztratilo smysl.
-Proti tomu, co má zakrytí řešit (nevidět ji omylem a pak na ni celý den
+Proti tomu, co má zámek řešit (nevidět ji omylem a pak na ni celý den
 myslet), je to nepodstatné.
 
 ### Smlouva o id

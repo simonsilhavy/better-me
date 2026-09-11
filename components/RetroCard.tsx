@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type { Habit, RetroValue } from '@/lib/domain';
-import { REVEAL_HOUR, isCovered, questionFor, revealKey } from '@/lib/retro';
+import { REVEAL_HOUR, coverState, questionFor, revealKey } from '@/lib/retro';
 import { localHour, today } from '@/lib/date';
 import { AutoTextarea } from './AutoTextarea';
 import { ScratchCard } from './ScratchCard';
@@ -34,10 +34,10 @@ export function RetroCard({
   const question = questionFor(habit, date, value);
   const hasAnswer = value.a.trim() !== '';
 
-  // Covered until proven otherwise: the server cannot know what this device
-  // has already scratched open, so the first paint assumes the foil is there
-  // and the effect below settles it.
-  const [covered, setCovered] = useState(true);
+  // Locked until proven otherwise: the server cannot know what this device
+  // has already scratched open, and the strictest state is the safe one to
+  // paint first — the effect below settles it.
+  const [state, setState] = useState<'open' | 'scratchable' | 'locked'>('locked');
 
   useEffect(() => {
     const settle = () => {
@@ -47,8 +47,8 @@ export function RetroCard({
       } catch {
         // Storage blocked — the foil just has to be rubbed off again.
       }
-      setCovered(
-        isCovered({
+      setState(
+        coverState({
           date,
           todayDate: today(),
           hasAnswer,
@@ -59,8 +59,8 @@ export function RetroCard({
     };
 
     settle();
-    // A card left open on screen at 19:58 should open by itself, not sit
-    // covered until the page is reloaded.
+    // A card left on screen at 19:58 should unlock by itself at eight, not sit
+    // locked until the page is reloaded.
     const t = setInterval(settle, TICK_MS);
     return () => clearInterval(t);
   }, [date, hasAnswer]);
@@ -71,7 +71,7 @@ export function RetroCard({
     } catch {
       // Not remembering it means one more rub; nothing is lost.
     }
-    setCovered(false);
+    setState('open');
   };
 
   const isToday = date === today();
@@ -100,13 +100,27 @@ export function RetroCard({
     </div>
   );
 
-  if (!covered) return card;
+  if (state === 'open') return card;
 
+  const locked = state === 'locked';
   return (
     <ScratchCard
       onReveal={uncover}
-      title={isToday ? 'Dnešní otázka' : 'Otázka na tenhle den'}
-      hint={isToday ? `Setři ji, nebo počkej na ${REVEAL_HOUR}:00` : 'Setři, jestli ji chceš vidět dřív'}
+      locked={locked}
+      title={
+        locked
+          ? isToday
+            ? 'Počkej do večera'
+            : 'Otázka na tenhle den'
+          : 'Dnešní otázka'
+      }
+      hint={
+        locked
+          ? isToday
+            ? `Setřít ji půjde po ${REVEAL_HOUR}:00`
+            : 'Setřít ji půjde až ten den večer'
+          : 'Setři ji a odkryj'
+      }
     >
       {card}
     </ScratchCard>
