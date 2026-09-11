@@ -4,6 +4,10 @@ Daily tracker — Next.js (App Router) + Neon Postgres + Drizzle, deployed on Ve
 Replaces the single-file `better-me.html` artifact whose data lived hardcoded in
 `seedDefaults()`.
 
+> **Complete documentation in Czech — including the reasoning behind the design
+> and a from-scratch build guide — is in [`docs/DOKUMENTACE.md`](docs/DOKUMENTACE.md).**
+> This file is the English technical summary.
+
 ## The rule the app is built on
 
 **Celebrate that a day was written down — never how the day went.** The reward
