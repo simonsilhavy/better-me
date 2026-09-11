@@ -185,6 +185,47 @@ Vypadá to jako detail, ale je to nosná věc:
 - Odpověď zapsaná přes API jako holý řetězec (chat relay neví, jaká otázka
   padla) dostane otázku daného dne doplněnou automaticky při zápisu.
 
+### Stírací los: otázka je do večera zakrytá
+
+Otázka dne je zakrytá až do **20:00**, nebo dokud ji uživatel sám neodkryje.
+
+**Proč:** kdo zná otázku ráno, může si den zařídit tak, aby na ni měl dobrou
+odpověď. Je to stejné zkreslení jako honit se za výhrou, jen jemnější a hůř
+viditelné — místo aby odpověď popisovala den, začne den sloužit odpovědi.
+Zakrytí to nezakazuje, jen to nedělá výchozím stavem: odkrýt dřív jde
+kdykoli, ale musí to být vědomé rozhodnutí, ne něco, do čeho se člověk
+připlete při ranním zápisu.
+
+**Jak to vypadá:** karta je pod stíracím losem — plátno s broušeným kovem,
+které se rozetře prstem nebo myší. Po setření zhruba 45 % zbytek sám zmizí.
+V rohu je tlačítko *Odkrýt rovnou* pro ty, kdo stírat nechtějí, a pro ovládání
+klávesnicí.
+
+**Pravidla (`isCovered()` v `lib/retro.ts`):**
+
+| Situace | Zakryto? |
+| --- | --- |
+| dnešek před 20:00, nedotčeno | ano |
+| dnešek ve 20:00 a později | ne, otevře se sám |
+| dnešek, už setřeno | ne, pamatuje se to |
+| dnešek, už je odpověď | ne — co jsi napsal, nejde odenevědět |
+| minulý den | ne — den je pryč, není co zařizovat |
+| budoucí den | ano, a **neotevře se ani po 20:00** |
+
+Otevřená karta se zkontroluje každých 30 vteřin, takže se ve 20:00 odkryje
+sama i na stránce, která zůstala celý večer otevřená.
+
+Že je karta setřená, si pamatuje `localStorage` pod klíčem
+`bm-retro-revealed-<datum>` — stejně jako sbalený oddíl je to věc zařízení,
+ne dat. Na druhém zařízení se setře znovu.
+
+**Známá mez:** text otázky je pod plátnem přítomný v DOM. Před čtečkou
+obrazovky i před tabulátorem je schovaný (`inert`), ale kdo se podívá do
+vývojářských nástrojů, přečte si ho. Bránit tomuhle by znamenalo otázku
+nevykreslovat vůbec — a pak by stírání neodkrývalo nic a ztratilo smysl.
+Proti tomu, co má zakrytí řešit (nevidět ji omylem a pak na ni celý den
+myslet), je to nepodstatné.
+
 ### Smlouva o id
 
 **Id se nikdy nesmí použít pro jinou otázku a nesmí zmizet, dokud na něj

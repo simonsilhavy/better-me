@@ -1,8 +1,9 @@
 'use client';
 
 import type { Habit, HabitValue } from '@/lib/domain';
-import { questionFor, retroValue } from '@/lib/retro';
+import { retroValue } from '@/lib/retro';
 import { AutoTextarea } from './AutoTextarea';
+import { RetroCard } from './RetroCard';
 import { Field } from './Field';
 import { Slider } from './Slider';
 import { Segmented } from './Segmented';
@@ -118,33 +119,14 @@ export function HabitControl({
       );
     }
 
-    case 'retro': {
-      const current = retroValue(value);
-      const question = questionFor(habit, date, current);
-
+    case 'retro':
       return (
-        <div className="bm-card flex flex-col">
-          {/* Top half asks, bottom half answers. */}
-          <div className="border-b border-[var(--border)] p-4">
-            {!cfg.hideLabel && (
-              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]">
-                {habit.label}
-              </p>
-            )}
-            <p className="text-sm font-medium text-[var(--text)]">
-              {question?.text ?? 'Zatím tu není žádná otázka.'}
-            </p>
-          </div>
-          <div className="p-4">
-            <AutoTextarea
-              value={current.a}
-              onChange={(a) => onChange({ q: question?.id ?? current.q, a })}
-              maxLength={cfg.maxLength ?? 4000}
-              placeholder="Napiš, co tě k tomu napadá…"
-            />
-          </div>
-        </div>
+        <RetroCard
+          habit={habit}
+          date={date}
+          value={retroValue(value)}
+          onChange={onChange}
+        />
       );
-    }
   }
 }

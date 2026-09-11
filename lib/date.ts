@@ -67,3 +67,19 @@ export function czDays(n: number): string {
   if (n >= 2 && n <= 4) return `${n} dny`;
   return `${n} dní`;
 }
+
+/**
+ * The hour of day (0-23) in the app's timezone, not the machine's.
+ *
+ * Used by the retrospective cover, which opens at a wall-clock hour rather
+ * than after some interval — so it has to mean the same thing on a server in
+ * UTC as on a phone in Prague.
+ */
+export function localHour(now: Date = new Date()): number {
+  const formatted = new Intl.DateTimeFormat('en-GB', {
+    timeZone: TIME_ZONE,
+    hour: '2-digit',
+    hourCycle: 'h23',
+  }).format(now);
+  return Number(formatted);
+}
