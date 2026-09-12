@@ -62,6 +62,10 @@ odpověď — to je stejné zkreslení jako honit se za výhrou. Tři stavy:
 se neodemkne ani v noci, minulý je vždy otevřený. Důsledek, se kterým
 se počítá: před 20:00 nejde dokončit celý den.
 
+**Tři otázky jsou záměrně bez „dneska"** — č. 4 (`rozhodilo`),
+12 (`vdecny`) a 14 (`unava-hlava`). Není to nedodělek; uživatel to tak
+chce a rozhodl o tom výslovně. Neupozorňuj na to jako na nesrovnalost.
+
 Odpovědi se na otázky odkazují přes `id`, které se ukládá do
 `entry_values.meta`. **Id se nikdy nesmí použít pro jinou otázku
 a nesmí zmizet**, dokud na něj odkazuje uložená odpověď — text měnit
