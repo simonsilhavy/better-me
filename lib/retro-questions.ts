@@ -50,7 +50,7 @@ export const RETRO_QUESTIONS: RetroQuestion[] = [
   { id: 'sam-sebou', text: 'Kdy ses dneska cítil nejvíc sám sebou?' },
   { id: 'rekl-ne', text: 'Na co jsi dneska řekl ne?' },
   { id: 'jinak', text: 'Co bys udělal jinak, pokud bys zažil dnešek znovu?' },
-  { id: 'potvrzeni-zvenci', text: 'Kde jsi dneska hledal potvrzení nebo pochvalu zvenčí místo toho, aby ses spolehl na vlastní úsudek?' },
+  { id: 'potvrzeni-zvenci', text: 'Kde jsi dneska hledal potvrzení zvenčí místo vlastního úsudku?' },
   { id: 'na-zitra', text: 'Co sis odložil na zítra, i když bys to zvládl dneska?' },
   { id: 'zapamatovat', text: 'Co si z dneška chceš zapamatovat?' },
   { id: 'neco-videl', text: 'Co jsi dneska udělal jen proto, aby to někdo viděl?' },
