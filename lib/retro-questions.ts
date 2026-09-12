@@ -34,7 +34,7 @@ export const RETRO_QUESTIONS: RetroQuestion[] = [
   { id: 'nejistota', text: 'Do čeho ses dneska pustil, i když sis nebyl jistý?' },
   { id: 'unava-hlava', text: 'Bránila ti víc únava, nebo hlava?' },
   { id: 'podekovat', text: 'Komu jsi dneska měl poděkovat?' },
-  { id: 'setrvacnost', text: 'Kolik z dneška bylo tvoje rozhodnutí a kolik setrvačnost?' },
+  { id: 'setrvacnost', text: 'Kolik z dneška bylo tvoje vědomé rozhodnutí a kolik vyjeté koleje?' },
   { id: 'obetoval', text: 'Co jsi dneska obětoval pro svůj vysněný život?' },
   { id: 'sebeovladani', text: 'Co tě dneska stálo nejvíc sebekontroly?' },
   { id: 'neozval', text: 'Na koho sis dneska vzpomněl a neozval ses mu?' },
