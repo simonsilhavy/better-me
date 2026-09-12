@@ -28,7 +28,7 @@ export const RETRO_QUESTIONS: RetroQuestion[] = [
   { id: 'dotahl', text: 'Co jsi dneska dotáhl do konce?' },
   { id: 'neco-nerekl', text: 'Co jsi dneska neřekl, i když jsi měl?' },
   { id: 'rozptyleni', text: 'Co ti dneska sebralo nejvíc pozornosti?' },
-  { id: 'pochvala', text: 'Za co se můžeš dnes pochválit?' },
+  { id: 'pochvala', text: 'Za co se můžeš dneska pochválit?' },
   { id: 'o-sobe', text: 'Co ses dneska dozvěděl o sobě?' },
   { id: 'vdecny', text: 'Za co jsi vděčný?' },
   { id: 'nejistota', text: 'Do čeho ses dneska pustil, i když sis nebyl jistý?' },
