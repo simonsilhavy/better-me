@@ -54,5 +54,5 @@ export const RETRO_QUESTIONS: RetroQuestion[] = [
   { id: 'na-zitra', text: 'Co sis odložil na zítra, i když bys to zvládl dneska?' },
   { id: 'zapamatovat', text: 'Co si z dneška chceš zapamatovat?' },
   { id: 'neco-videl', text: 'Co jsi dneska udělal jen proto, aby to někdo viděl?' },
-  { id: 'posledni-den', text: 'Pokud by dneska byl tvůj poslední den, stál by za to?' },
+  { id: 'posledni-den', text: 'Pokud by dnešek byl tvůj poslední den, stál by za to?' },
 ];
