@@ -44,6 +44,19 @@ jak to teď zní a proč. Nikdy chybu neopravuj tiše.
 Opravuj jen skutečné chyby. Styl, tón, oslovení ani formulaci neměň
 bez zeptání — to je autorské rozhodnutí uživatele, ne chyba.
 
+## Vysvětluj, co děláš
+
+Uživatel se chce v téhle oblasti rozvíjet, ne jen dostat hotovou práci.
+Když padne odborný pojem, příkaz nebo rozhodnutí, **vysvětli ho** — co to
+je, proč se to dělá právě takhle a co by se stalo jinak. Nečekej, až se
+zeptá.
+
+Nejlíp to sedne na příkladu z tohohle projektu: hash se vysvětluje na tom,
+jak jsme porovnávali produkční a dev heslo, ne na abstraktní definici.
+
+Zároveň to nesmí zabřednout do přednášky. Krátce, konkrétně, a hlavně
+u věcí, které se v projektu opravdu dějí.
+
 ## Retrospektivní otázky
 
 Jediný zdroj je `lib/retro-questions.ts`; skripty ho importují.
