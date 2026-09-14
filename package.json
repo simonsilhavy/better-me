@@ -16,7 +16,8 @@
     "db:update:tones": "tsx scripts/update-habit-tones.ts",
     "db:principles": "tsx scripts/principles-to-choice.ts",
     "db:restructure": "tsx scripts/restructure-groups.ts",
-    "db:retro": "tsx scripts/update-retro-questions.ts"
+    "db:retro": "tsx scripts/update-retro-questions.ts",
+    "db:seed:fake": "tsx scripts/seed-fake.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
