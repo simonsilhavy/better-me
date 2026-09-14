@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 const key = (id: number | 'none') => `bm-collapsed-${id}`;
 
 /** How long a finished group stays open before folding itself away. */
-const FOLD_DELAY_MS = 1100;
+const FOLD_DELAY_MS = 3000;
 
 /** How long a value must hold still before it counts as the reader's answer. */
 const SETTLE_MS = 700;

@@ -166,7 +166,11 @@ a musí ho poslat uživatel.
   v Playwrightu: `fill()` navíc odmítne hodnotu mimo `step`. Nastavuj
   hodnotu přes nativní setter a `dispatchEvent('input')`.
 - **`pkill -f next-server` zabije i vlastní shell**, pokud je hledaný
-  řetězec v tomtéž příkazu. Používej `scratchpad/restart.sh`.
+  řetězec v tomtéž příkazu. Používej `scripts/restart-dev.sh`, který zabíjí
+  podle PID. Nikdy nepřestavuj `.next` pod běžícím serverem — bude dál
+  rozesílat odkazy na soubory, které přestavba nahradila, a stránka spadne
+  na 500 u statických souborů. Vypadá to jako rozbitý build, je to jen
+  neukončený server.
 - Ukládá se **každý odpovězený habit**, i když se hodnota rovná výchozí.
   Rozdíl mezi „nezodpovězeno" a „vědomě Žádné" je nosný.
 - `entry_values.habit_id` je `ON DELETE RESTRICT` — databáze odmítne

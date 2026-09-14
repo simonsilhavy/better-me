@@ -408,7 +408,7 @@ v téhle části útočí na totéž: zkrátit cestu od otevření k hotovu.
 
 ### Hotový oddíl se sám sbalí
 
-Jakmile oddíl dosáhne plného počtu, po `FOLD_DELAY_MS` (1 100 ms) se sbalí
+Jakmile oddíl dosáhne plného počtu, po `FOLD_DELAY_MS` (3 000 ms) se sbalí
 a nechá po sobě jeden řádek s tím, co je v něm zapsané. Stránka se během
 vyplňování zkracuje místo aby stála.
 
