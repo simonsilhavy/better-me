@@ -18,7 +18,7 @@ config();
 
 refuseProduction('Seeding days');
 
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 async function main() {
@@ -28,7 +28,13 @@ async function main() {
   const { upsertDay } = await import('../lib/entries');
   const { isValidDate } = await import('../lib/date');
 
+  // The file holds real diary entries, so it is gitignored and a fresh clone
+  // will not have one. Missing and empty mean the same thing here.
   const file = resolve(process.cwd(), 'seed-data.json');
+  if (!existsSync(file)) {
+    console.log('seed-data.json tu není — není co importovat.');
+    return;
+  }
   const raw = JSON.parse(readFileSync(file, 'utf8')) as unknown;
 
   if (!Array.isArray(raw)) {

@@ -49,3 +49,6 @@ next-env.d.ts
 
 # next.js agent rule files
 /AGENTS.md
+
+# osobní data — nikdy do veřejného repozitáře
+/seed-data.json
