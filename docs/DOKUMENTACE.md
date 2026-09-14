@@ -612,8 +612,16 @@ se cookies sdílejí napříč stránkami původu, odcházející stránka nedok
 spolehlivě rozlišit svoje sezení od nástupcova. Náhodné odhlašování uprostřed
 práce je horší než krátké předvídatelné okno.
 
-Požadavek s hlavičkou `Authorization: Bearer $API_TOKEN` bránu obchází, takže
-skripty a chat relay fungují dál, zatímco rozhraní zůstává soukromé.
+Požadavek s hlavičkou `Authorization: Bearer $API_TOKEN` bránu obchází, ale
+**jen na adresách pod `/api/`** — skripty fungují dál, stránky appky zůstávají
+za PINem.
+
+Dřív token odemykal všechno a byl tím druhým klíčem k celé appce: kdo ho měl,
+přečetl si deník stránku po stránce, aniž by PIN kdy potkal. Token je přitom
+dlouho žijící řetězec, který sedí v proměnných nasazení a vkládá se do skriptů
+— zaslouží si výrazně menší dosah než PIN, který se píše jednou za sezení
+a vyprší. Po zúžení jde uniklým tokenem pořád číst i zapisovat dny přes API,
+od toho tam je, ale rozhraní se jím neotevře.
 
 ---
 
