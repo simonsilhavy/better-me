@@ -23,17 +23,7 @@ Nejde o funkci navíc, ale o zálohu. Proto je první.
   obnovit rozdíl mezi „nezodpovězeno" a „vědomě žádné"
 - k odpovědím patří `id` otázky, na kterou odpovídaly
 
-## 2. Zapomenutý PIN — chybí cesta zpět
-
-Když uživatel zapomene PIN, appka nenabízí nic. Jediné východisko vede
-přes Vercel (nastavit nový `APP_PIN`, nasadit) a přes SQL v Neonu
-(`delete from login_attempts`). Stalo se to 14. 9. a bez téhle konverzace
-by se uživatel dovnitř nedostal.
-
-Sepsat jako postup do `docs/DOKUMENTACE.md`. Není to kód, je to návod —
-ale musí existovat dřív, než bude potřeba.
-
-## 3. Editor otázek v Úpravách
+## 2. Editor otázek v Úpravách
 
 Sada jde dnes měnit jen přes `npm run db:retro`, tedy přes commit
 a nasazení. Jedno sezení se tím strávilo na přeformulování pěti otázek.
@@ -47,26 +37,26 @@ Editor musí hlídat tytéž tři podmínky co skript:
 Sada zůstává na 36 — přidat znamená nahradit, aby se nerozmělnila
 kadence návratu.
 
-## 4. Archivace habitu z Úprav
+## 3. Archivace habitu z Úprav
 
 `entry_values.habit_id` je `ON DELETE RESTRICT`, takže databáze smazání
 habitu s historií odmítne. Archivace je správná odpověď a chybí.
 
-## 5. Výměna API tokenu
+## 4. Výměna API tokenu
 
 Odloženo uživatelem. Token je od 14. 9. zúžený jen na `/api/`, takže
 rozhraní appky už neodemyká. Zbývá ho vyměnit a novou hodnotu nesdílet —
 tím skončí Claudeův přístup k produkčním datům.
 
-## 6. Ostatní funkce z plánu rozvoje
+## 5. Ostatní funkce z plánu rozvoje
 
 | | co | poznámka |
 | --- | --- | --- |
-| 6.1 | Cíle na habit | cíl smí být informace, ne podmínka pochvaly |
-| 6.2 | Večerní připomínka | navazuje na los ve 20:00; vyzývá k zápisu, ne ke „splnění" |
-| 6.3 | PWA | ikona na ploše, offline shell; nejvíc práce, nejmíň naléhavé |
+| 5.1 | Cíle na habit | cíl smí být informace, ne podmínka pochvaly |
+| 5.2 | Večerní připomínka | navazuje na los ve 20:00; vyzývá k zápisu, ne ke „splnění" |
+| 5.3 | PWA | ikona na ploše, offline shell; nejvíc práce, nejmíň naléhavé |
 
-## 7. Přehled — nápady uživatele
+## 6. Přehled — nápady uživatele
 
 Uživatel má vlastní návrhy, které chtěl probrat po nasazení oddílu.
 Zatím nezazněly. **Začít tím, že je řekne**, ne dalším návrhem.
@@ -74,7 +64,7 @@ Zatím nezazněly. **Začít tím, že je řekne**, ne dalším návrhem.
 Teď už je na čem — v produkci je 48 skutečných dní, takže Přehled
 poprvé ukazuje reálná čísla.
 
-## 8. Linear
+## 7. Linear
 
 Konektor v adresáři existuje, účet je založený, **připojený není**.
 
@@ -82,13 +72,13 @@ Konektor v adresáři existuje, účet je založený, **připojený není**.
 - uživatel: ověřit, že je zapnutý i pro daný chat
 - Claude: založit backlog z tohohle souboru
 
-## 9. Napojení na GitHub — nepovinné
+## 8. Napojení na GitHub — nepovinné
 
 Push na `main` by nasadil produkci, push na `claude/*` vyrobil preview
 proti dev databázi. Odpadl by tím Vercel token a jeho rotace.
 Vercel → Settings → Git → Connect.
 
-## 10. Technický dluh
+## 9. Technický dluh
 
 - **`middleware.ts` je v Next 16 zastaralý.** Build hlásí, že se má použít
   `proxy`. Zatím jen varování, ale stojí na tom PIN i omezování pokusů,

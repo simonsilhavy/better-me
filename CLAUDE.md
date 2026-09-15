@@ -173,6 +173,10 @@ a musí ho poslat uživatel.
   neukončený server.
 - Ukládá se **každý odpovězený habit**, i když se hodnota rovná výchozí.
   Rozdíl mezi „nezodpovězeno" a „vědomě Žádné" je nosný.
+- **Zapomenutý PIN se neobnovuje, nastavuje se nový.** Vercel `APP_PIN`
+  je Secret a hodnotu nikdy nevydá zpátky. Postup je v `docs/DOKUMENTACE.md`,
+  oddíl 10 — pořadí je: nastavit, nasadit, teprve pak zkoušet. Zámek
+  z neúspěšných pokusů vyprší i sám, nejdéle za hodinu.
 - `entry_values.habit_id` je `ON DELETE RESTRICT` — databáze odmítne
   smazat habit s historií. Je to pojistka, ne překážka.
 

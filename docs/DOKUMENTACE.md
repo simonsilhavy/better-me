@@ -623,6 +623,49 @@ dlouho žijící řetězec, který sedí v proměnných nasazení a vkládá se 
 a vyprší. Po zúžení jde uniklým tokenem pořád číst i zapisovat dny přes API,
 od toho tam je, ale rozhraní se jím neotevře.
 
+### Zapomenutý PIN
+
+**Starý PIN se obnovit nedá — nastavuje se nový.** Na Vercelu je `APP_PIN`
+uložený jako *Secret*, což znamená, že ho platforma po uložení nikdy nevydá
+zpátky: ani majiteli, ani nikomu jinému. Je to záměr, tajemství se má dát
+zapsat a použít, ne přečíst.
+
+Appka sama žádnou cestu zpět nenabízí a nabízet nemá — u jednouživatelské
+appky by „zapomněl jsem heslo" znamenalo druhá vrátka, která by se dala
+otevřít místo těch prvních. Východisko proto vede přes účty, ke kterým má
+přístup jen majitel.
+
+Postup:
+
+1. **Nastavit nový PIN.** Vercel → projekt → Settings → Environments →
+   **Production** → `APP_PIN` → Edit → šest číslic → Save. Prostředí nechat
+   zaškrtnuté jen Production; Preview a Development míří na dev databázi.
+   Délka je pevná: `PIN_LENGTH = 6` v `app/login/PinPad.tsx`, klávesnice
+   nic jiného nepřijme.
+
+2. **Nasadit.** Spolehlivě se nová hodnota projeví až novým nasazením
+   (`npx vercel deploy --prod`). Občas zabere dřív, ale spoléhat se na to
+   nelze.
+
+3. **Odemknout bránu**, pokud se mezitím nasbíraly neúspěšné pokusy. Neon →
+   větev `production` → SQL Editor → nový prázdný dotaz:
+
+   ```sql
+   delete from login_attempts;
+   ```
+
+   V tabulce jsou výhradně počitadla neúspěchů, žádná data uživatele.
+
+**Zámek vyprší i sám** — nejdéle za hodinu na IP, za čtvrt hodiny globálně,
+a po 30 minutách klidu se záznam IP smaže. Krok 3 to jen urychlí. Kdo si
+není jistý, může místo mazání prostě počkat.
+
+> ⚠️ **Pozor na pořadí.** Nezkoušet PIN dřív, než je nasazeno a odemčeno:
+> každé chybné zadání zámek prodlouží, a při druhém selhání se zdvojnásobí.
+
+Nový PIN nepatří do chatu ani do commitu. Majitel ho zná, nikdo další ho
+vědět nepotřebuje.
+
 ---
 
 ## 11. API
