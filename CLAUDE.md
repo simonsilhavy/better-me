@@ -177,8 +177,12 @@ a musí ho poslat uživatel.
   je Secret a hodnotu nikdy nevydá zpátky. Postup je v `docs/DOKUMENTACE.md`,
   oddíl 10 — pořadí je: nastavit, nasadit, teprve pak zkoušet. Zámek
   z neúspěšných pokusů vyprší i sám, nejdéle za hodinu.
-- `entry_values.habit_id` je `ON DELETE RESTRICT` — databáze odmítne
-  smazat habit s historií. Je to pojistka, ne překážka.
+- `entry_values.habit_id` je `ON DELETE RESTRICT` — databáze odmítne smazat
+  habit, na který ještě odkazují hodnoty. Chrání to před smazáním jako
+  **vedlejším efektem**, ne před vědomým smazáním z Úprav: `deleteHabit()`
+  nejdřív odstraní hodnoty a teprve pak habit, takže omezení nevystřelí.
+  Kdo chce data zachovat, habit místo mazání **archivuje přepínačem** —
+  zmizí ze zápisu, historie zůstane.
 
 ## Stav a co dál
 

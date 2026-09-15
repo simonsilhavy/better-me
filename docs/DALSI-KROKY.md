@@ -78,8 +78,6 @@ Vercel → Settings → Git → Connect.
 - **`middleware.ts` je v Next 16 zastaralý.** Build hlásí, že se má použít
   `proxy`. Zatím jen varování, ale stojí na tom PIN i omezování pokusů,
   takže to není místo, které se řeší až pod tlakem.
-- **`scripts/_seedtest.ts`** (27 řádků) vypadá jako pozůstatek z ladění.
-  Ověřit, jestli ho něco používá, a když ne, smazat.
 - **Chybí testy.** Nejcennější by byly u `lib/domain.ts`, `lib/insights.ts`
   a `coverState()` — čistá logika bez databáze. Vymyšlená data v dev mají
   zasazený signál, proti kterému jde ověřit i Přehled.
