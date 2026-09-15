@@ -412,9 +412,28 @@ Jakmile oddíl dosáhne plného počtu, po `FOLD_DELAY_MS` (3 000 ms) se sbalí
 a nechá po sobě jeden řádek s tím, co je v něm zapsané. Stránka se během
 vyplňování zkracuje místo aby stála.
 
-Pauza existuje proto, aby se oddíl nesbalil pod prstem, který ještě pracuje:
-každá další změna ji restartuje. **Ruční sbalení nebo rozbalení má vždycky
-přednost** — od té chvíle se automatika u toho oddílu vypne.
+Mezi „vyplněno" a „hotovo" ale stojí dvě pojistky, protože to není totéž.
+
+**Každá změna uvnitř oddílu odpočet restartuje.** Dřív visel odpočet jen na
+počtu vyplněných habitů — jenže to číslo se přestane hýbat v okamžiku, kdy
+je poslední habit poprvé zodpovězený. Oddíl se proto sbalil tři vteřiny po
+**prvním** stisku, i když uživatel pořád opravoval číslo, které netrefil
+napoprvé. Formulář si teď počítá úpravy pro každý oddíl zvlášť
+(`groupEdits` v `EntryForm.tsx`) a `GroupPanel` je má mezi závislostmi
+odpočtu. Zvlášť pro každý oddíl proto, že společné počitadlo by drželo
+hotový oddíl otevřený, dokud se vyplňuje cokoli jinde, a pak by při první
+pauze sbalilo všechno najednou.
+
+**Dokud je uvnitř kurzor, nesbalí se vůbec.** Samotný restart nestačí: psaní
+poznámky znamená zamyslet se, a tříveřinová pauza uprostřed věty vypadá
+stejně jako konec. Pole nesmí zmizet pod rukama, které ho používají. Fokus
+se hlídá přes `onFocusCapture`/`onBlurCapture` na celém oddílu — v Reactu
+tyhle události bublají, takže jeden pár pokryje všechny ovládací prvky
+uvnitř. `relatedTarget` říká, kam fokus míří: přechod z jednoho pole do
+druhého uvnitř téhož oddílu se nesmí číst jako odchod.
+
+**Ruční sbalení nebo rozbalení má vždycky přednost** — od té chvíle se
+automatika u toho oddílu vypne.
 
 Který oddíl je sbalený, je věc zařízení, ne dat — žije to v `localStorage`
 a čte se to až po mountu, protože server o tom nemůže nic vědět.

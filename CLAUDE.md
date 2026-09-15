@@ -171,6 +171,11 @@ a musí ho poslat uživatel.
   rozesílat odkazy na soubory, které přestavba nahradila, a stránka spadne
   na 500 u statických souborů. Vypadá to jako rozbitý build, je to jen
   neukončený server.
+- **Sbalení oddílu se nesmí spustit pod rukama uživatele.** Drží ho dvě
+  pojistky v `GroupPanel.tsx`: odpočet restartuje každá úprava uvnitř oddílu
+  (`edits`, počítané per oddíl v `EntryForm.tsx`) a dokud je uvnitř kurzor,
+  nespustí se vůbec (`working`). Samotné „vyplněno" nestačí — to číslo se
+  přestane hýbat hned po prvním stisku, kdežto uživatel pokračuje.
 - Ukládá se **každý odpovězený habit**, i když se hodnota rovná výchozí.
   Rozdíl mezi „nezodpovězeno" a „vědomě Žádné" je nosný.
 - **Zapomenutý PIN se neobnovuje, nastavuje se nový.** Vercel `APP_PIN`

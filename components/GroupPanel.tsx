@@ -31,6 +31,7 @@ export function GroupPanel({
   emoji,
   active,
   summary,
+  edits = 0,
   children,
 }: {
   id: number | 'none';
@@ -43,11 +44,20 @@ export function GroupPanel({
   active?: boolean;
   /** One line of what is inside, shown only once the group is folded away. */
   summary?: string;
+  /**
+   * Rises with every edit inside this group. Completion alone cannot tell the
+   * difference between "filled in and done" and "filled in and still being
+   * corrected", because the count stops changing the moment the last habit is
+   * answered — and the reader usually keeps going after that.
+   */
+  edits?: number;
   children: React.ReactNode;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const [ready, setReady] = useState(false);
   const [popping, setPopping] = useState(false);
+  /** True while the cursor is on something inside this group. */
+  const [working, setWorking] = useState(false);
 
   /** Set once the reader folds or unfolds by hand; disables the automatic fold. */
   const manual = useRef(false);
@@ -69,8 +79,18 @@ export function GroupPanel({
 
   const complete = total > 0 && filled === total;
 
-  // Folding hangs off completion. Re-running on `filled` is what restarts the
-  // timer when the reader keeps editing a group that was already full.
+  // Folding hangs off completion, but completion is not the same as being
+  // finished. Two guards stand between the two:
+  //
+  //   `edits` restarts the countdown on every change inside the group. Hanging
+  //   it off `filled` alone was wrong: that number stops moving once the last
+  //   habit is answered, so a group folded three seconds after the first press
+  //   even while the reader was still correcting the figure.
+  //
+  //   `working` holds the fold off entirely while the cursor is inside. Writing
+  //   a note means pausing to think, and a pause is indistinguishable from
+  //   being done if all you watch is the clock. A field must never vanish from
+  //   under the hands that are using it.
   useEffect(() => {
     if (!ready) return;
 
@@ -80,7 +100,7 @@ export function GroupPanel({
     }
     wasComplete.current = true;
 
-    if (manual.current || collapsed) return;
+    if (manual.current || collapsed || working) return;
 
     const t = setTimeout(() => {
       setCollapsed(true);
@@ -92,7 +112,7 @@ export function GroupPanel({
     }, FOLD_DELAY_MS);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filled, total, ready]);
+  }, [filled, total, ready, edits, working]);
 
   const earned = complete && Boolean(emoji) && Boolean(active);
 
@@ -139,7 +159,17 @@ export function GroupPanel({
   };
 
   return (
-    <section className="flex flex-col gap-3">
+    // React's focus events bubble, unlike the browser's own, so one pair here
+    // covers every control inside. `relatedTarget` is where focus is heading:
+    // moving from one field to the next within the group must not read as
+    // leaving it, or the fold would fire between two fields.
+    <section
+      className="flex flex-col gap-3"
+      onFocusCapture={() => setWorking(true)}
+      onBlurCapture={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setWorking(false);
+      }}
+    >
       <button
         type="button"
         onClick={toggle}

@@ -77,6 +77,13 @@ export function EntryForm({
   /** Bumped on every edit so a finished save knows if it is still current. */
   const revision = useRef(0);
   const savedRevision = useRef(0);
+  /**
+   * Edits counted per group, so a group can tell that its own contents are
+   * still being worked on. Counting them globally would keep a finished group
+   * open for as long as anything anywhere is being filled in, and then fold
+   * everything at once on the first pause.
+   */
+  const [groupEdits, setGroupEdits] = useState<Record<string, number>>({});
   const [dayDone, setDayDone] = useState(false);
   const wasDayComplete = useRef(false);
   /** False until the first settled render, so opening a finished day is quiet. */
@@ -137,6 +144,9 @@ export function EntryForm({
     setDirty(true);
     setStatus('idle');
     revision.current += 1;
+
+    const groupKey = String(habit.groupId ?? 'none');
+    setGroupEdits((prev) => ({ ...prev, [groupKey]: (prev[groupKey] ?? 0) + 1 }));
   };
 
   // Answered habits are sent as they stand. An untouched control is not a
@@ -303,6 +313,7 @@ export function EntryForm({
           emoji={group.config.emoji}
           active={groupActive(items)}
           summary={groupSummary(items)}
+          edits={groupEdits[String(group.id)] ?? 0}
         >
           {items.map((habit) => (
             <HabitControl
@@ -324,6 +335,7 @@ export function EntryForm({
           filled={ungrouped.filter((h) => answered.has(h.key)).length}
           total={ungrouped.length}
           summary={groupSummary(ungrouped)}
+          edits={groupEdits.none ?? 0}
         >
           {ungrouped.map((habit) => (
             <HabitControl
