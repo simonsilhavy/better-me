@@ -37,26 +37,21 @@ Editor musí hlídat tytéž tři podmínky co skript:
 Sada zůstává na 36 — přidat znamená nahradit, aby se nerozmělnila
 kadence návratu.
 
-## 3. Archivace habitu z Úprav
-
-`entry_values.habit_id` je `ON DELETE RESTRICT`, takže databáze smazání
-habitu s historií odmítne. Archivace je správná odpověď a chybí.
-
-## 4. Výměna API tokenu
+## 3. Výměna API tokenu
 
 Odloženo uživatelem. Token je od 14. 9. zúžený jen na `/api/`, takže
 rozhraní appky už neodemyká. Zbývá ho vyměnit a novou hodnotu nesdílet —
 tím skončí Claudeův přístup k produkčním datům.
 
-## 5. Ostatní funkce z plánu rozvoje
+## 4. Ostatní funkce z plánu rozvoje
 
 | | co | poznámka |
 | --- | --- | --- |
-| 5.1 | Cíle na habit | cíl smí být informace, ne podmínka pochvaly |
-| 5.2 | Večerní připomínka | navazuje na los ve 20:00; vyzývá k zápisu, ne ke „splnění" |
-| 5.3 | PWA | ikona na ploše, offline shell; nejvíc práce, nejmíň naléhavé |
+| 4.1 | Cíle na habit | cíl smí být informace, ne podmínka pochvaly |
+| 4.2 | Večerní připomínka | navazuje na los ve 20:00; vyzývá k zápisu, ne ke „splnění" |
+| 4.3 | PWA | ikona na ploše, offline shell; nejvíc práce, nejmíň naléhavé |
 
-## 6. Přehled — nápady uživatele
+## 5. Přehled — nápady uživatele
 
 Uživatel má vlastní návrhy, které chtěl probrat po nasazení oddílu.
 Zatím nezazněly. **Začít tím, že je řekne**, ne dalším návrhem.
@@ -64,7 +59,7 @@ Zatím nezazněly. **Začít tím, že je řekne**, ne dalším návrhem.
 Teď už je na čem — v produkci je 48 skutečných dní, takže Přehled
 poprvé ukazuje reálná čísla.
 
-## 7. Linear
+## 6. Linear
 
 Konektor v adresáři existuje, účet je založený, **připojený není**.
 
@@ -72,13 +67,13 @@ Konektor v adresáři existuje, účet je založený, **připojený není**.
 - uživatel: ověřit, že je zapnutý i pro daný chat
 - Claude: založit backlog z tohohle souboru
 
-## 8. Napojení na GitHub — nepovinné
+## 7. Napojení na GitHub — nepovinné
 
 Push na `main` by nasadil produkci, push na `claude/*` vyrobil preview
 proti dev databázi. Odpadl by tím Vercel token a jeho rotace.
 Vercel → Settings → Git → Connect.
 
-## 9. Technický dluh
+## 8. Technický dluh
 
 - **`middleware.ts` je v Next 16 zastaralý.** Build hlásí, že se má použít
   `proxy`. Zatím jen varování, ale stojí na tom PIN i omezování pokusů,
@@ -93,7 +88,8 @@ Vercel → Settings → Git → Connect.
 
 ## Hotové a nasazené
 
-Zápis ve třech sekcích, oddíly a konfigurovatelné habity, PIN a sezení,
+Zápis ve třech sekcích, oddíly a konfigurovatelné habity včetně jejich
+archivace, PIN a sezení,
 Historie srovnaná se zásadou, zkrácený zápis (sbalování, proužek,
 autosave, oslavy), Deník, Přehled, stírací los na retrospektivní otázku.
 
